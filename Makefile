@@ -4,7 +4,7 @@ CFLAGS = -std=c++11 -Werror -Wall -Wextra -Wno-unused-parameter
 ifeq ($(OS),Windows_NT)
 	LIBS = -mwindows -lmingw32 -lSDL2main -lSDL2 -lm -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lversion -luuid -lvorbisfile -lvorbisenc -lstdc++ 
 else
-	LIBS = -lSDL2 -lSDL2_mixer -lm -lstdc++
+	LIBS = -lSDL2 -lm -lstdc++
 endif
 
 .PHONY: default all clean
