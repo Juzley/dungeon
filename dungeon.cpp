@@ -9,16 +9,19 @@ namespace dungeon
     struct Room
     {
         public:
-            Room(x, y, width, height)
-                : m_x(x), m_y(y), m_width(width), m_height(height)
+            Room(unsigned int x,
+                 unsigned int y,
+                 unsigned int width,
+                 unsigned int height)
+                : x(x), y(y), width(width), height(height)
             {
             }
 
-            unsigned int m_x;
-            unsigned int m_y;
-            unsigned int m_width;
-            unsigned int m_height;
-    }
+            unsigned int x;
+            unsigned int y;
+            unsigned int width;
+            unsigned int height;
+    };
 
 
     class Map
@@ -32,13 +35,23 @@ namespace dungeon
                 std::uniform_int_distribution<> x_dis(0, MAP_WIDTH);
                 std::uniform_int_distribution<> y_dis(0, MAP_HEIGHT);
 
+                // Create some rooms
                 for (unsigned int i = 0; i < MAP_ROOMS; i++) {
                     Room room(x_dis(gen), y_dis(gen), 6, 6);
                     rooms.push_back(room);
                 }
 
+                // Fill in the squares on the map.
                 for (auto&& room : rooms) {
-                    // @@@
+                    for (unsigned int x = room.x;
+                         x < room.x + room.width;
+                         x++) {
+                        for (unsigned int y = room.y;
+                             y < room.y + room.height;
+                             y++) {
+                            m_map[y * MAP_WIDTH + x] = true;
+                        }
+                    }
                 }
             }
 
