@@ -1,15 +1,45 @@
 #include <SDL2/SDL.h>
 #include <array>
+#include <random>
 #include <cmath>
 
 namespace dungeon
 {
+    
+    struct Room
+    {
+        public:
+            Room(x, y, width, height)
+                : m_x(x), m_y(y), m_width(width), m_height(height)
+            {
+            }
+
+            unsigned int m_x;
+            unsigned int m_y;
+            unsigned int m_width;
+            unsigned int m_height;
+    }
+
+
     class Map
     {
         public:
             Map ()
             {
-                // TODO: Initialize map
+                std::vector<Room> rooms;
+                std::random_device rd;
+                std::mt19937 gen(rd());
+                std::uniform_int_distribution<> x_dis(0, MAP_WIDTH);
+                std::uniform_int_distribution<> y_dis(0, MAP_HEIGHT);
+
+                for (unsigned int i = 0; i < MAP_ROOMS; i++) {
+                    Room room(x_dis(gen), y_dis(gen), 6, 6);
+                    rooms.push_back(room);
+                }
+
+                for (auto&& room : rooms) {
+                    // @@@
+                }
             }
 
             void Draw(SDL_Renderer *renderer) const
@@ -36,6 +66,10 @@ namespace dungeon
             }
 
         private:
+
+
+
+            static const unsigned int MAP_ROOMS = 20;
             static const unsigned int MAP_WIDTH = 160;
             static const unsigned int MAP_HEIGHT = 120;
             static const unsigned int TILE_WIDTH = 5;
