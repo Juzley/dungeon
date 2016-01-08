@@ -35,6 +35,8 @@ namespace dungeon
                 std::uniform_int_distribution<> x_dis(0, MAP_WIDTH);
                 std::uniform_int_distribution<> y_dis(0, MAP_HEIGHT);
 
+                m_map.fill(false);
+
                 // Create some rooms
                 for (unsigned int i = 0; i < MAP_ROOMS; i++) {
                     Room room(x_dis(gen), y_dis(gen), 6, 6);
