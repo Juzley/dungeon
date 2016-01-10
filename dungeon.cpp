@@ -192,8 +192,10 @@ namespace dungeon
             int
             PathHeuristic(Tile *tile, Tile *goal)
             {
-                int h = std::abs(tile->x - goal->x) +
-                                                std::abs(tile->y - goal->y);
+                int h = std::abs(static_cast<int>(tile->x) -
+                                 static_cast<int>(goal->x)) +
+                        std::abs(static_cast<int>(tile->y) -
+                                 static_cast<int>(goal->y));
 
                 // Prefer to go through empty space.
                 if (tile->nonempty) {
