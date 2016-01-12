@@ -22,6 +22,31 @@ namespace dungeon
             {
             }
 
+            // @@@
+            bool Intersects (Room &other)
+            {
+                if (x + width < other.x || x > other.x + other.width ||
+                    y < other.y + other.height || y + height > other.y) {
+                    // Intersects
+
+                    if (x + width > other.x + other.width) {
+                        // Move (other.right - x)
+                    } else {
+                        // Move (other.x - right)
+                    }
+                    
+                    if (y + height > other.y + other.height) {
+                        // Move (other.bottom - y)
+                    } else {
+                        // Move (other.y - bottom)
+                    }
+
+                    return (true);
+                }
+
+                return (false);
+            }
+
             unsigned int x;
             unsigned int y;
             unsigned int width;
