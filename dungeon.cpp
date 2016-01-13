@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <utility>
 #include <algorithm>
+#include <iostream>
+#include <sstream>
 
 
 namespace dungeon
@@ -112,6 +114,12 @@ namespace dungeon
             unsigned int height;
     };
 
+    std::ostream& operator << (std::ostream& os, const Room& r)
+    {
+        return os << "Room [L " << r.Left() << ", R " << r.Right() <<
+                    ", T " << r.Top() << ", B " << r.Bottom() << "]";
+    }
+
 
     struct Tile
     {
@@ -179,6 +187,10 @@ namespace dungeon
                                 total_adjust_x += adjust_x;
                                 total_adjust_y += adjust_y;
                             }
+
+                            std::cout << room << " intersects with " << other
+                                << ", adjust (" << adjust_x << ", " << adjust_y
+                                << ")" << std::endl;
                         }
 
                         // Check for intersections with walls.
@@ -186,16 +198,25 @@ namespace dungeon
                             intersect_count++;
                             total_adjust_x += adjust_x;
                             total_adjust_y += adjust_y;
+                            std::cout
+                                << room << " intersects with walls, adjust ("
+                                << adjust_x << ", " << adjust_y << ")"
+                                << std::endl;
                         }
 
                         if (intersect_count > 0) {
                             found_intersections = true;
-                            room.Move(static_cast<float>(total_adjust_x) /
-                                      static_cast<float>(intersect_count) *
-                                      1.1f,
-                                      static_cast<float>(total_adjust_y) /
-                                      static_cast<float>(intersect_count) *
-                                      1.1f);
+                            int final_adjust_x =
+                                (static_cast<float>(total_adjust_x) /
+                                 static_cast<float>(intersect_count)) * 1.1f;
+                            int final_adjust_y =
+                                (static_cast<float>(total_adjust_y) /
+                                 static_cast<float>(intersect_count)) * 1.1f;
+                            std::cout << "Found " << intersect_count
+                                << " intersections for " << room
+                                << " moving (" << final_adjust_x << ", "
+                                << final_adjust_y << std::endl;
+                            room.Move(final_adjust_x, final_adjust_y);
                         }
                     }
 
