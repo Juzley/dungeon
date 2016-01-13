@@ -7,48 +7,107 @@
 #include <functional>
 #include <unordered_map>
 #include <utility>
+#include <algorithm>
 
 
 namespace dungeon
 {
-    struct Room
+    class Room
     {
         public:
-            Room(unsigned int x,
-                 unsigned int y,
+            Room(int          left,
+                 int          top,
                  unsigned int width,
                  unsigned int height)
-                : x(x), y(y), width(width), height(height)
+                : left(left), top(top), width(width), height(height)
             {
             }
 
-            // @@@
-            bool Intersects (Room &other)
+            bool Intersects (Room &other,
+                             int  *adjust_x = NULL,
+                             int  *adjust_y = NULL)
             {
-                if (x + width < other.x || x > other.x + other.width ||
-                    y < other.y + other.height || y + height > other.y) {
-                    // Intersects
+                if (Left() < other.Right() && Right() > other.Left() &&
+                    Top() < other.Bottom() && Bottom() > other.Top()) {
+                    // Intersects, find the intersection distance if required.
 
-                    if (x + width > other.x + other.width) {
-                        // Move (other.right - x)
-                    } else {
-                        // Move (other.x - right)
+                    if (adjust_x != NULL) {
+                        // Work out if moving left or right is shorter.
+                        if (std::abs(Right() - other.Left()) >
+                            std::abs(other.Right() - Left())) {
+                            *adjust_x = other.Left() - Right();
+                        } else {
+                            *adjust_x = other.Right() - Left();
+                        }
                     }
                     
-                    if (y + height > other.y + other.height) {
-                        // Move (other.bottom - y)
-                    } else {
-                        // Move (other.y - bottom)
+                    if (adjust_y != NULL) {
+                        // Work out if moving up or down is shorter.
+                        if (std::abs(Bottom() - other.Top()) >
+                            std::abs(other.Bottom() - Top())) {
+                            *adjust_y = other.Top() - Bottom();
+                        } else {
+                            *adjust_y = other.Bottom() - Top();
+                        }
                     }
 
-                    return (true);
+                    return true;
                 }
 
-                return (false);
+                return false;
             }
 
-            unsigned int x;
-            unsigned int y;
+            void Move(int x, int y)
+            {
+                left += x;
+                top += y;
+            }
+
+            int Left() const
+            {
+                return left;
+            }
+
+            int Right() const
+            {
+                return left + static_cast<int>(width);
+            }
+
+            int Top() const
+            {
+                return top;
+            }
+
+            int Bottom() const
+            {
+                return top + static_cast<int>(height);
+            }
+
+            unsigned int Width() const
+            {
+                return width;
+            }
+            
+            unsigned int Height() const
+            {
+                return height;
+            }
+
+            int CenterX() const
+            {
+                return static_cast<int>(static_cast<float>(left) +
+                                        static_cast<float>(width) / 2.0f);
+            }
+
+            int CenterY() const
+            {
+                return static_cast<int>(static_cast<float>(top) +
+                                        static_cast<float>(height) / 2.0f);
+            }
+
+        private:
+            int          left;
+            int          top;
             unsigned int width;
             unsigned int height;
     };
@@ -57,13 +116,13 @@ namespace dungeon
     struct Tile
     {
         public:
-            Tile() : nonempty(false)
+            Tile() : filled(false)
             {
             }
 
             unsigned int x;
             unsigned int y;
-            bool nonempty;
+            bool         filled;
     };
 
 
@@ -77,8 +136,8 @@ namespace dungeon
                 std::mt19937 gen(rd());
 
                 // Hack, -6 to avoid generating rooms off the map.
-                std::uniform_int_distribution<> x_dis(0, MAP_WIDTH - 6);
-                std::uniform_int_distribution<> y_dis(0, MAP_HEIGHT - 6);
+                std::uniform_int_distribution<> x_dis(0, MAP_WIDTH);
+                std::uniform_int_distribution<> y_dis(0, MAP_HEIGHT);
 
                 // Initialize tiles - each tile needs to know its own location
                 // for pathfinding.
@@ -95,15 +154,88 @@ namespace dungeon
                     rooms.push_back(room);
                 }
 
-                // Fill in the squares on the map.
+
+                // Make sure rooms aren't out-of-bounds and don't overlap.
+                for (unsigned int i = 0; i < SEPARATION_ITERS; i++) {
+                    bool found_intersections = false;
+
+                    for (auto&& room : rooms) {
+                        unsigned int intersect_count;
+                        int total_adjust_x = 0;
+                        int total_adjust_y = 0;
+                        int adjust_x;
+                        int adjust_y;
+
+                        // Check for intersections with other rooms.
+                        // TODO: efficient lookup for collisions with other
+                        // rooms, rather than scanning the whole lot - possibly
+                        // only worth it for large room numbers.
+                        for (auto&& other : rooms) {
+                            if (&room != &other &&
+                                room.Intersects(other,
+                                                &adjust_x,
+                                                &adjust_y)) {
+                                intersect_count++;
+                                total_adjust_x += adjust_x;
+                                total_adjust_y += adjust_y;
+                            }
+                        }
+
+                        // Check for intersections with walls.
+                        if (RoomOutOfBounds(room, &adjust_x, &adjust_y)) {
+                            intersect_count++;
+                            total_adjust_x += adjust_x;
+                            total_adjust_y += adjust_y;
+                        }
+
+                        if (intersect_count > 0) {
+                            found_intersections = true;
+                            room.Move(static_cast<float>(total_adjust_x) /
+                                      static_cast<float>(intersect_count) *
+                                      1.1f,
+                                      static_cast<float>(total_adjust_y) /
+                                      static_cast<float>(intersect_count) *
+                                      1.1f);
+                        }
+                    }
+
+                    if (!found_intersections) {
+                        break;
+                    }
+                }
+
+                // Discard any rooms that are out of bounds or intersecting
+                // other rooms. Remove out-of-bounds rooms first, to ensure
+                // that the minimal number of rooms are removed in the case
+                // where there are rooms that are out-of-bounds and also
+                // intersecting other rooms.
+                rooms.erase(std::remove_if(
+                                rooms.begin(), rooms.end(),
+                                [this](Room r) { return RoomOutOfBounds(r); }),
+                            rooms.end());
+
+                auto roomIter = rooms.begin();
+                while (roomIter != rooms.end()) {
+                    bool erased = false;
+                    auto &room = *roomIter;
+
+                    for (auto&& other : rooms) {
+                        if (&room != &other && room.Intersects(other)) {
+                            roomIter = rooms.erase(roomIter);
+                            erased = true;
+                        }
+                    }
+
+                    if (!erased) {
+                        ++roomIter;
+                    }
+                }
+
+                // Fill in the map squares taken by rooms.
                 for (auto&& room : rooms) {
-                    for (unsigned int x = room.x;
-                         x < room.x + room.width;
-                         x++) {
-                        for (unsigned int y = room.y;
-                             y < room.y + room.height;
-                             y++) {
-                            m_map[x][y].nonempty = true;
+                    for (int x = room.Left(); x < room.Right(); x++) {
+                        for (int y = room.Top(); y < room.Bottom(); y++) {
+                            m_map[x][y].filled = true;
                         }
                     }
                 }
@@ -111,10 +243,9 @@ namespace dungeon
                 // Find a path between the first two rooms
                 Room &start_room = rooms[0];
                 Room &end_room = rooms[1];
-                Tile *start = &m_map[start_room.x + start_room.width / 2]
-                                        [start_room.y + start_room.height / 2];
-                Tile *end = &m_map[end_room.x + end_room.width / 2]
-                                            [end_room.y + end_room.height / 2];
+                Tile *start =
+                    &m_map[start_room.CenterX()][start_room.CenterY()];
+                Tile *end = &m_map[end_room.CenterX()][end_room.CenterY()];
 
                 std::unordered_map<Tile *, int> cost_so_far;
                 std::unordered_map<Tile *, Tile *> came_from;
@@ -154,7 +285,7 @@ namespace dungeon
                 // Mark the path on the map.
                 auto current = came_from[end];
                 while (current != start) {
-                    current->nonempty = true;
+                    current->filled = true;
                     current = came_from[current];
                 }
             }
@@ -167,7 +298,7 @@ namespace dungeon
 
                 for (std::size_t x = 0; x < m_map.size(); x++) {
                     for (std::size_t y = 0; y < m_map[x].size(); y++) {
-                        if (m_map[x][y].nonempty) {
+                        if (m_map[x][y].filled) {
                             rect.x = x * TILE_WIDTH;
                             rect.y = y * TILE_HEIGHT;
                             rect.w = TILE_WIDTH;
@@ -185,9 +316,11 @@ namespace dungeon
             static const unsigned int MAP_HEIGHT = 120;
             static const unsigned int TILE_WIDTH = 5;
             static const unsigned int TILE_HEIGHT = 5;
+            static const unsigned int SEPARATION_ITERS = 10;
 
-            std::vector<Tile *>
-            GetTileNeighbours(Tile *tile)
+            std::array<std::array<Tile, MAP_HEIGHT>, MAP_WIDTH> m_map;
+
+            std::vector<Tile *> GetTileNeighbours (Tile *tile)
             {
                 std::vector<Tile *> neighbours;
 
@@ -211,11 +344,11 @@ namespace dungeon
                         &m_map[tile->x][tile->y - 1]);
                 }
 
-                return (neighbours);
+                return neighbours;
             }
 
             int
-            PathHeuristic(Tile *tile, Tile *goal)
+            PathHeuristic (Tile *tile, Tile *goal)
             {
                 int h = std::abs(static_cast<int>(tile->x) -
                                  static_cast<int>(goal->x)) +
@@ -223,14 +356,48 @@ namespace dungeon
                                  static_cast<int>(goal->y));
 
                 // Prefer to go through empty space.
-                if (tile->nonempty) {
+                if (tile->filled) {
                     h *= 2;
                 }
                 
                 return h;
             }
 
-            std::array<std::array<Tile, MAP_HEIGHT>, MAP_WIDTH> m_map;
+            bool RoomOutOfBounds (Room &room,
+                                  int  *adjust_x = NULL,
+                                  int  *adjust_y = NULL)
+            {
+                bool out = false;
+                
+                if (room.Left() < 0) {
+                    out = true;
+                    if (adjust_x != NULL) {
+                        *adjust_x = -room.Left();
+                    }
+                } else if (room.Right() > static_cast<int>(MAP_WIDTH) - 1) {
+                    out = true;
+                    if (adjust_x != NULL) {
+                        *adjust_x =
+                            static_cast<int>(MAP_WIDTH) - room.Right() - 1;
+                    }
+                }
+
+                if (room.Top() < 0) {
+                    out = true;
+                    if (adjust_y != NULL) {
+                        *adjust_y = -room.Top();
+                    }
+                } else if (room.Bottom() > static_cast<int>(MAP_HEIGHT) - 1) {
+                    out = true;
+
+                    if (adjust_y != NULL) {
+                        *adjust_y =
+                            static_cast<int>(MAP_HEIGHT) - room.Bottom() - 1;
+                    }
+                }
+
+                return out;
+            }
     };
 }
 
@@ -275,5 +442,5 @@ main (int argc, char *argv[])
 
     SDL_Quit();
 
-    return (0);
+    return 0;
 }
