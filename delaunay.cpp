@@ -20,6 +20,11 @@ namespace delaunay
             return std::sqrt(x * x + y * y);
         }
 
+        bool operator == (const Vec2f &v2)
+        {
+            return x == v2.x && y == v2.y;
+        }
+
         float x;
         float y;
     };
@@ -34,16 +39,18 @@ namespace delaunay
         return Vec2f(vl.x + vr.x, vl.y + vr.y);
     }
 
-    bool operator == (const Vec2f &v1, const Vec2f &v2)
-    {
-        return v1.x == v2.x && v1.y == v2.y;
-    }
 
 
     struct Edge
     {
         Edge(const Vec2f &p1, const Vec2f &p2) : p1(p1), p2(p2),
         {
+        }
+
+        bool operator == (const Edge& e2)
+        {
+            return ((p1 == e2.p1 && p2 == e2.p2) ||
+                    (p1 == e2.p2 && p2 == e2.p1));
         }
 
         Vec2f p1;
@@ -57,6 +64,7 @@ namespace delaunay
             Triangle(const Vec2f &p1, const Vec2f &p2, const Vec2f &p3)
                 : p1(p1), p2(p2), p3(p3)
             {
+                edges = {Edge(p1, p2), Edge(p2, p3), Edge(p3, p1)};
                 float ab = (p1.x * p1.x) + (p1.y * p1.y);
                 float cd = (p2.x * p2.x) + (p2.y * p2.y);
                 float ef = (p3.x * p3.x) + (p3.y * p3.y);
@@ -87,13 +95,21 @@ namespace delaunay
             
             bool operator == (const Triangle &t2)
             {
-                return p1 == t2.p2 && p2 == t2.p2 && p3 == t3.p3;
+                return (p1 == t2.p1 || p1 == t2.p2 || p1 == t2.p3) &&
+                       (p2 == t2.p1 || p2 == t2.p2 || p1 == t2.p3) &&
+                       (p3 == t2.p1 || p3 == t2.p2 || p3 == t2.p3);
+            }
+
+            const std::array<Edge, 3> & GetEdges()
+            {
+                return edges;
             }
 
         private:
             Vec2f p1;
             Vec2f p2;
             Vec2f p3;
+            std::array<Edge, 3> edges;
             Vec2f circumcenter;
             float circumradius;
     };
@@ -149,10 +165,31 @@ namespace delaunay
             }
 
             std::vector<Edge> poly;
+            std::unordered_set<Edge> edges;
+            std::unordered_set<Edge> duplicateEdges;
 
             // Find all unique edges in the bad tris and add them to the poly.
             for (auto &&tri : badTris) {
+                for (auto &&edge : tri.GetEdges()) {
+                    if (edges.find(edge) != edges.end()) {
+                        duplicateEdges.insert(edge);
+                    } else {
+                       edges.insert(edge);
+                    }
+                }
+            }
 
+            for (auto &&dup : duplicateEdges) {
+                edges.erase(dup);
+            }
+
+            poly.insert(poly.end(), edges.begin(), edges.end());
+
+            // Remove the bad triangles from the list of tris.
+            tris.erase(tris.removeif(
+                tris.begin(), tris.end(), [badTris](Triangle t) {
+                     return badTris.find(t) != badTris.end();
+                });
             }
         }
     }

@@ -166,9 +166,11 @@ namespace dungeon
                 // Make sure rooms aren't out-of-bounds and don't overlap.
                 for (unsigned int i = 0; i < SEPARATION_ITERS; i++) {
                     bool found_intersections = false;
+                    std::cout << "Room separation iteration " << i + 1
+                        << std::endl;
 
                     for (auto&& room : rooms) {
-                        unsigned int intersect_count;
+                        unsigned int intersect_count = 0;
                         int total_adjust_x = 0;
                         int total_adjust_y = 0;
                         int adjust_x;
@@ -186,11 +188,12 @@ namespace dungeon
                                 intersect_count++;
                                 total_adjust_x += adjust_x;
                                 total_adjust_y += adjust_y;
+
+                                std::cout << room << " intersects with "
+                                    << other << ", adjust (" << adjust_x
+                                    << ", " << adjust_y << ")" << std::endl;
                             }
 
-                            std::cout << room << " intersects with " << other
-                                << ", adjust (" << adjust_x << ", " << adjust_y
-                                << ")" << std::endl;
                         }
 
                         // Check for intersections with walls.
@@ -215,12 +218,13 @@ namespace dungeon
                             std::cout << "Found " << intersect_count
                                 << " intersections for " << room
                                 << " moving (" << final_adjust_x << ", "
-                                << final_adjust_y << std::endl;
+                                << final_adjust_y << ")" << std::endl;
                             room.Move(final_adjust_x, final_adjust_y);
                         }
                     }
 
                     if (!found_intersections) {
+                        std::cout << "Found no intersections" << std::endl;
                         break;
                     }
                 }
