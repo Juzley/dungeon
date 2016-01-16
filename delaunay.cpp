@@ -40,7 +40,6 @@ namespace delaunay
     }
 
 
-
     struct Edge
     {
         Edge(const Vec2f &p1, const Vec2f &p2) : p1(p1), p2(p2),
@@ -91,6 +90,13 @@ namespace delaunay
             bool circumcircleContains(const Point &p)
             {
                 return circumCircleContains(Vec2f(p.x, p.y));
+            }
+
+            bool hasCommonPoints(const Triangle &t)
+            {
+                return (p1 == t.p1 || p1 == t.p2 || p1 == t.p3 ||
+                        p2 == t.p1 || p2 == t.p2 || p2 == t.p3 ||
+                        p3 == t.p1 || p3 == t.p2 || p3 == t.p3);
             }
             
             bool operator == (const Triangle &t2)
@@ -149,10 +155,11 @@ namespace delaunay
     {
         std::vector<Triangle> tris;
 
-        // Find the super triangle and add it to the list of tris.
+        // Find the super-triangle and add it to the list of tris.
         Triangle superTri = findSuperTriangle(vertices);
         tris.push_back(superTri);
 
+        // Insert vertices into the mesh one at a time.
         for (auto&& v : vertices) {
             std::unordered_set<Triangle> badTris;
 
@@ -179,18 +186,27 @@ namespace delaunay
                 }
             }
 
-            for (auto &&dup : duplicateEdges) {
-                edges.erase(dup);
+            for (auto &&edge : edges) {
+                if (duplicateEdges.find() == duplicateEdges.end()) {
+                    poly.push_back(edge);
+                }
             }
-
-            poly.insert(poly.end(), edges.begin(), edges.end());
 
             // Remove the bad triangles from the list of tris.
             tris.erase(tris.removeif(
                 tris.begin(), tris.end(), [badTris](Triangle t) {
                      return badTris.find(t) != badTris.end();
                 });
+
+            // Create new triangles from the current vertex and the edges of
+            // the polygon, and add them to the list of tris.
+            for (auto &&edge : poly) {
+                tris.push_back(Triangle(v, edge.p1, edge.p2));
             }
         }
+
+        // Remove any triangles that contain a vertex from the super-triangle.
+        std::remove_if(std::begin(), std::end(),
+            [superTri](tri) { return superTri.hasCommonPoints(tri); });
     }
 }
