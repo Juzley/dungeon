@@ -1,52 +1,39 @@
 #include <cmath>
+#include <array>
+#include <vector>
+#include <unordered_set>
+#include <algorithm>
+
+
+#include "delaunay.hpp"
+
 
 namespace delaunay
 {
-    struct Point
+    /*
+     * hash_combine
+     *
+     * Combine multiple std::hash values.
+     */
+    template <class T>
+    inline void hash_combine(std::size_t& seed, const T& v)
     {
-        int x;
-        int y;
-    };
-
-
-    struct Vec2f
-    {
-        Vec2f(float x, float y) : x(x), y(y)
-        {
-        }
-
-        float Magnitude() const
-        {
-            return std::sqrt(x * x + y * y);
-        }
-
-        bool operator == (const Vec2f &v2)
-        {
-            return x == v2.x && y == v2.y;
-        }
-
-        float x;
-        float y;
-    };
-
-    Vec2f operator - (const Vec2f &vl, const Vec2f &vr)
-    {
-        return Vec2f(vl.x - vr.x, vl.y - vr.y);
-    }
-
-    Vec2f operator + (const Vec2f &vl, const Vec2f &vr)
-    {
-        return Vec2f(vl.x + vr.x, vl.y + vr.y);
+        std::hash<T> hasher;
+        seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
     }
 
 
+    /*
+     * Edge
+     * 
+     * An edge in a graph, defined by its endpoints.
+     */
     struct Edge
     {
-        Edge(const Vec2f &p1, const Vec2f &p2) : p1(p1), p2(p2),
-        {
-        }
+        Edge() {}
+        Edge(const Vec2f &p1, const Vec2f &p2) : p1(p1), p2(p2) {}
 
-        bool operator == (const Edge& e2)
+        bool operator == (const Edge& e2) const
         {
             return ((p1 == e2.p1 && p2 == e2.p2) ||
                     (p1 == e2.p2 && p2 == e2.p1));
@@ -56,14 +43,45 @@ namespace delaunay
         Vec2f p2;
     };
 
+    struct EdgeHash
+    {
+        std::size_t operator()(const Edge &e) const
+        {
+            std::size_t seed = 0;
 
+            hash_combine(seed, e.p1.x);
+            hash_combine(seed, e.p1.y);
+            hash_combine(seed, e.p2.x);
+            hash_combine(seed, e.p2.y);
+
+            return seed;
+        }
+    };
+
+
+    /*
+     * Triangle
+     *
+     * A simple triangle class, specifically taylored for our triangulation
+     * calculations.
+     */
     class Triangle
     {
+        friend struct TriangleHash;
+
         public:
-            Triangle(const Vec2f &p1, const Vec2f &p2, const Vec2f &p3)
-                : p1(p1), p2(p2), p3(p3)
+            Triangle() {}
+
+            Triangle(const Triangle &t)
+                : p1(t.p1), p2(t.p2), p3(t.p3),
+                  edges{{t.edges[0], t.edges[1], t.edges[2]}}
             {
-                edges = {Edge(p1, p2), Edge(p2, p3), Edge(p3, p1)};
+            }
+
+            Triangle(const Vec2f &p1, const Vec2f &p2, const Vec2f &p3)
+                : p1(p1), p2(p2), p3(p3),
+                  edges{{Edge(p1, p2), Edge(p2, p3), Edge(p3, p1)}}
+            {
                 float ab = (p1.x * p1.x) + (p1.y * p1.y);
                 float cd = (p2.x * p2.x) + (p2.y * p2.y);
                 float ef = (p3.x * p3.x) + (p3.y * p3.y);
@@ -80,33 +98,28 @@ namespace delaunay
                 circumradius = (p1 - circumcenter).Magnitude();
             }
 
-            bool circumcircleContains(const Vec2f &v)
+            bool circumcircleContains(const Vec2f &v) const
             {
                 // Distance between circumcenter and point 
                 float distance = (v - circumcenter).Magnitude();
                 return distance <= circumradius;
             }
 
-            bool circumcircleContains(const Point &p)
-            {
-                return circumCircleContains(Vec2f(p.x, p.y));
-            }
-
-            bool hasCommonPoints(const Triangle &t)
+            bool hasCommonPoints(const Triangle &t) const
             {
                 return (p1 == t.p1 || p1 == t.p2 || p1 == t.p3 ||
                         p2 == t.p1 || p2 == t.p2 || p2 == t.p3 ||
                         p3 == t.p1 || p3 == t.p2 || p3 == t.p3);
             }
             
-            bool operator == (const Triangle &t2)
+            bool operator == (const Triangle &t2) const
             {
                 return (p1 == t2.p1 || p1 == t2.p2 || p1 == t2.p3) &&
                        (p2 == t2.p1 || p2 == t2.p2 || p1 == t2.p3) &&
                        (p3 == t2.p1 || p3 == t2.p2 || p3 == t2.p3);
             }
 
-            const std::array<Edge, 3> & GetEdges()
+            const std::array<Edge, 3> & GetEdges() const
             {
                 return edges;
             }
@@ -120,8 +133,31 @@ namespace delaunay
             float circumradius;
     };
 
+    struct TriangleHash
+    {
+        std::size_t operator()(const Triangle &t) const
+        {
+            std::size_t seed = 0;
 
-    Triangle findSuperTriangle(std::vector<Point> &vertices)
+            hash_combine(seed, t.p1.x);
+            hash_combine(seed, t.p1.y);
+            hash_combine(seed, t.p2.x);
+            hash_combine(seed, t.p2.y);
+            hash_combine(seed, t.p3.x);
+            hash_combine(seed, t.p3.y);
+
+            return seed;
+        }
+    };
+
+
+    /*
+     * findSuperTriangle
+     *
+     * Finds the super-triangle which encloses a given set of points in the 2D
+     * plane. The points of the triangle will be in clockwise order.
+     */
+    static Triangle findSuperTriangle(std::vector<Vec2f> &vertices)
     {
         float minX = vertices[0].x;
         float minY = vertices[0].y;
@@ -129,8 +165,8 @@ namespace delaunay
         float maxY = minY;
 
         for (auto&& vert : vertices) {
-            float x = static_cast<float>(vert.x);
-            float y = static_cast<float>(vert.y);
+            float x = vert.x;
+            float y = vert.y;
 
             if (x < minX) { minX = x; }
             if (y < minY) { minY = y; }
@@ -150,8 +186,13 @@ namespace delaunay
     }
 
 
-    std::vector<std::pair<Point, Point>>
-    generateGraph(std::vector<Point> &vertices)
+    /*
+     * delaunayTriangulate
+     *
+     * See function declaration for more detail.
+     */
+    std::vector<std::pair<Vec2f, Vec2f>>
+    delaunayTriangulate(std::vector<Vec2f> &vertices)
     {
         std::vector<Triangle> tris;
 
@@ -161,19 +202,20 @@ namespace delaunay
 
         // Insert vertices into the mesh one at a time.
         for (auto&& v : vertices) {
-            std::unordered_set<Triangle> badTris;
+            std::unordered_set<Triangle, TriangleHash> badTris;
 
             // Find all the tris that are no longer valid once the current
             // vertex is inserted.
             for (auto &&tri : tris) {
-                if (tri->circumcircleContains(v)) {
-                    badTris.insert(t);
+                if (tri.circumcircleContains(v)) {
+                    badTris.insert(tri);
                 }
             }
 
             std::vector<Edge> poly;
-            std::unordered_set<Edge> edges;
-            std::unordered_set<Edge> duplicateEdges;
+
+            std::unordered_set<Edge, EdgeHash> edges;
+            std::unordered_set<Edge, EdgeHash> duplicateEdges;
 
             // Find all unique edges in the bad tris and add them to the poly.
             for (auto &&tri : badTris) {
@@ -181,22 +223,22 @@ namespace delaunay
                     if (edges.find(edge) != edges.end()) {
                         duplicateEdges.insert(edge);
                     } else {
-                       edges.insert(edge);
+                        edges.insert(edge);
                     }
                 }
             }
 
             for (auto &&edge : edges) {
-                if (duplicateEdges.find() == duplicateEdges.end()) {
+                if (duplicateEdges.find(edge) == duplicateEdges.end()) {
                     poly.push_back(edge);
                 }
             }
 
             // Remove the bad triangles from the list of tris.
-            tris.erase(tris.removeif(
+            tris.erase(std::remove_if(
                 tris.begin(), tris.end(), [badTris](Triangle t) {
-                     return badTris.find(t) != badTris.end();
-                });
+                    return badTris.find(t) != badTris.end();
+                }));
 
             // Create new triangles from the current vertex and the edges of
             // the polygon, and add them to the list of tris.
@@ -206,7 +248,19 @@ namespace delaunay
         }
 
         // Remove any triangles that contain a vertex from the super-triangle.
-        std::remove_if(std::begin(), std::end(),
-            [superTri](tri) { return superTri.hasCommonPoints(tri); });
+        tris.erase(std::remove_if(tris.begin(), tris.end(),
+            [superTri](const Triangle &tri) {
+                return superTri.hasCommonPoints(tri);
+            }));
+
+        
+        std::vector<std::pair<Vec2f, Vec2f>> result;
+        for (auto &&tri : tris) {
+            for (auto &&edge : tri.GetEdges()) {
+                result.push_back(std::pair<Vec2f, Vec2f>(edge.p1, edge.p2));
+            }
+        }
+
+        return result;
     }
 }
