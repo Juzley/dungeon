@@ -26,12 +26,12 @@ namespace delaunay {
         float y;
     };
 
-    Vec2f operator - (const Vec2f &vl, const Vec2f &vr)
+    static inline Vec2f operator - (const Vec2f &vl, const Vec2f &vr)
     {
         return Vec2f(vl.x - vr.x, vl.y - vr.y);
     }
 
-    Vec2f operator + (const Vec2f &vl, const Vec2f &vr)
+    static inline Vec2f operator + (const Vec2f &vl, const Vec2f &vr)
     {
         return Vec2f(vl.x + vr.x, vl.y + vr.y);
     }
@@ -44,7 +44,7 @@ namespace delaunay {
      * of the resulting graph are returned as a vector of pairs of points
      * defining the endpoints of the edges.
      */
-    std::vector<std::pair<Vec2f, Vec2f>> generateGraph(
+    std::vector<std::pair<Vec2f, Vec2f>> delaunayTriangulate(
                                                 std::vector<Vec2f> &vertices);
 }
 

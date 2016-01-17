@@ -3,6 +3,7 @@
 #include <vector>
 #include <unordered_set>
 #include <algorithm>
+#include <iostream>
 
 
 #include "delaunay.hpp"
@@ -21,6 +22,22 @@ namespace delaunay
         std::hash<T> hasher;
         seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
     }
+
+
+   struct {
+       bool operator()(const Vec2f* v1, const Vec2f* v2)
+       {
+           if (v1->x < v2->x) {
+               return true;
+           } else if (v1->x > v2->x) {
+               return false;
+           } else if (v1->y < v2->y) {
+               return true;
+           } else {
+               return false;
+           }
+       }
+   } vecLess;
 
 
     /*
@@ -49,10 +66,15 @@ namespace delaunay
         {
             std::size_t seed = 0;
 
-            hash_combine(seed, e.p1.x);
-            hash_combine(seed, e.p1.y);
-            hash_combine(seed, e.p2.x);
-            hash_combine(seed, e.p2.y);
+            // Sort the points so that if there are two edges with the same
+            // points but different order, then hash to the same value.
+            std::array<const Vec2f*, 2> pts = { &e.p1, &e.p2 };
+            std::sort(pts.begin(), pts.end(), vecLess);
+
+            hash_combine(seed, pts[0]->x);
+            hash_combine(seed, pts[0]->y);
+            hash_combine(seed, pts[1]->x);
+            hash_combine(seed, pts[1]->y);
 
             return seed;
         }
@@ -68,13 +90,15 @@ namespace delaunay
     class Triangle
     {
         friend struct TriangleHash;
+        friend std::ostream& operator << (std::ostream& os, const Triangle& t);
 
         public:
             Triangle() {}
 
             Triangle(const Triangle &t)
                 : p1(t.p1), p2(t.p2), p3(t.p3),
-                  edges{{t.edges[0], t.edges[1], t.edges[2]}}
+                  edges{{t.edges[0], t.edges[1], t.edges[2]}},
+                  circumcenter(t.circumcenter), circumradius(t.circumradius)
             {
             }
 
@@ -133,18 +157,31 @@ namespace delaunay
             float circumradius;
     };
 
+    std::ostream& operator << (std::ostream& os, const Triangle& t)
+    {
+        return os << "Triangle ["
+            << "(" << t.p1.x << ", " << t.p1.y << "), "
+            << "(" << t.p2.x << ", " << t.p2.y << "), "
+            << "(" << t.p3.x << ", " << t.p3.y << ")] ";
+    }
+
     struct TriangleHash
     {
         std::size_t operator()(const Triangle &t) const
         {
             std::size_t seed = 0;
 
-            hash_combine(seed, t.p1.x);
-            hash_combine(seed, t.p1.y);
-            hash_combine(seed, t.p2.x);
-            hash_combine(seed, t.p2.y);
-            hash_combine(seed, t.p3.x);
-            hash_combine(seed, t.p3.y);
+            // Sort the points so that if there are two tris with the same
+            // points but different order, then hash to the same value.
+            std::array<const Vec2f*, 3> pts = { &t.p1, &t.p2, &t.p3 };
+            std::sort(pts.begin(), pts.end(), vecLess);
+
+            hash_combine(seed, pts[0]->x);
+            hash_combine(seed, pts[0]->y);
+            hash_combine(seed, pts[1]->x);
+            hash_combine(seed, pts[1]->y);
+            hash_combine(seed, pts[2]->x);
+            hash_combine(seed, pts[2]->y);
 
             return seed;
         }
@@ -238,7 +275,7 @@ namespace delaunay
             tris.erase(std::remove_if(
                 tris.begin(), tris.end(), [badTris](Triangle t) {
                     return badTris.find(t) != badTris.end();
-                }));
+                }), tris.end());
 
             // Create new triangles from the current vertex and the edges of
             // the polygon, and add them to the list of tris.
@@ -251,8 +288,7 @@ namespace delaunay
         tris.erase(std::remove_if(tris.begin(), tris.end(),
             [superTri](const Triangle &tri) {
                 return superTri.hasCommonPoints(tri);
-            }));
-
+            }), tris.end());
         
         std::vector<std::pair<Vec2f, Vec2f>> result;
         for (auto &&tri : tris) {
