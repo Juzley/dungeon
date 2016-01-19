@@ -6,10 +6,10 @@
 #include <iostream>
 
 
-#include "delaunay.hpp"
+#include "graph.hpp"
 
 
-namespace delaunay
+namespace graph
 {
     /*
      * hash_combine
@@ -49,6 +49,11 @@ namespace delaunay
     {
         Edge() {}
         Edge(const Vec2f &p1, const Vec2f &p2) : p1(p1), p2(p2) {}
+
+        float Length() const
+        {
+            return (p1 - p2).Magnitude();
+        }
 
         bool operator == (const Edge& e2) const
         {
@@ -228,7 +233,7 @@ namespace delaunay
      *
      * See function declaration for more detail.
      */
-    std::vector<std::pair<Vec2f, Vec2f>>
+    std::vector<Triangle>
     delaunayTriangulate(std::vector<Vec2f> &vertices)
     {
         std::vector<Triangle> tris;
@@ -290,13 +295,27 @@ namespace delaunay
                 return superTri.hasCommonPoints(tri);
             }), tris.end());
         
-        std::vector<std::pair<Vec2f, Vec2f>> result;
-        for (auto &&tri : tris) {
-            for (auto &&edge : tri.GetEdges()) {
-                result.push_back(std::pair<Vec2f, Vec2f>(edge.p1, edge.p2));
-            }
+        return tris;
+    }
+
+
+    std::vector<Edge>
+    generateUrquhart(std::vector<Vec2f> &vertices)
+    {
+        std::vector<Triangle> delaunayTris = delaunayTriangulate(vertices);
+
+        std::unordered_set<Edge, EdgeHash> edges;
+        for (auto &&tri : delaunayTris) {
+            auto triEdges = tri.GetEdges();
+            auto &longestEdge =
+                *std::maxElement(triEdges.begin(), triEdges.end(),
+                                [](const Edge &e1, const Edge &e2) {
+                                    e1.Length() < e2.Length();
+                                });
+            std::copy_if(triEdges.begin() triEdges.end(), edges.begin(),
+                         [](const Edge &e) { return e != longestEdge; });
         }
 
-        return result;
+        return edges;
     }
 }

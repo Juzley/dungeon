@@ -12,6 +12,9 @@
 #include <sstream>
 
 
+#include "delaunay.hpp"
+
+
 namespace dungeon
 {
     class Room
@@ -444,6 +447,20 @@ main (int argc, char *argv[])
                               SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
+    using namespace delaunay;
+    std::vector<Vec2f> verts;
+    verts.push_back(Vec2f(1.0f, 1.0f));
+    verts.push_back(Vec2f(1.0f, 3.0f));
+    verts.push_back(Vec2f(3.0f, 3.0f));
+    verts.push_back(Vec2f(3.0f, 1.0f));
+
+    std::vector<std::pair<Vec2f, Vec2f>> graph = delaunayTriangulate(verts);
+
+    for (auto &&edge : graph) {
+        std::cout << "Edge: (" << edge.first.x << ", " << edge.first.y
+            << ") to (" << edge.second.x << ", " << edge.second.y << ")"
+            << std::endl;
+    }
 
     run = true;
     while (run) {
