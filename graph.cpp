@@ -203,8 +203,10 @@ namespace graph
                                 [](const Edge &e1, const Edge &e2) {
                                     return e1.Length() < e2.Length();
                                 });
-            std::copy_if(triEdges.begin(), triEdges.end(), edges.begin(),
-                 [longestEdge](const Edge &e) { return e != longestEdge; });
+            std::copy_if(
+                triEdges.begin(), triEdges.end(),
+                std::inserter(edges, edges.begin()),
+                [longestEdge](const Edge &e) { return e != longestEdge; });
         }
 
         std::vector<Edge> uniqueEdges;
