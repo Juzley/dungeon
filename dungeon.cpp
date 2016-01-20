@@ -383,7 +383,7 @@ namespace dungeon
 
                 if (tile->y < MAP_HEIGHT - 1) {
                     neighbours.push_back(
-                        &m_map[tile->x][tile->y - 1]);
+                        &m_map[tile->x][tile->y + 1]);
                 }
 
                 return neighbours;
