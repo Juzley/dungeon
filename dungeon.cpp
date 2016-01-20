@@ -11,12 +11,18 @@
 #include <iostream>
 #include <sstream>
 
-
-#include "delaunay.hpp"
+#include "graph.hpp"
 
 
 namespace dungeon
 {
+    struct Point
+    {
+        int x;
+        int y;
+    };
+
+
     class Room
     {
         public:
@@ -165,7 +171,6 @@ namespace dungeon
                     rooms.push_back(room);
                 }
 
-
                 // Make sure rooms aren't out-of-bounds and don't overlap.
                 for (unsigned int i = 0; i < SEPARATION_ITERS; i++) {
                     bool found_intersections = false;
@@ -260,7 +265,7 @@ namespace dungeon
                 }
 
                 // Fill in the map squares taken by rooms.
-                for (auto&& room : rooms) {
+                for (auto &&room : rooms) {
                     for (int x = room.Left(); x < room.Right(); x++) {
                         for (int y = room.Top(); y < room.Bottom(); y++) {
                             m_map[x][y].filled = true;
@@ -268,53 +273,62 @@ namespace dungeon
                     }
                 }
 
-                // Find a path between the first two rooms
-                Room &start_room = rooms[0];
-                Room &end_room = rooms[1];
-                Tile *start =
-                    &m_map[start_room.CenterX()][start_room.CenterY()];
-                Tile *end = &m_map[end_room.CenterX()][end_room.CenterY()];
+                // Use an Urquhart graph to determine the connections between
+                // the rooms.
+                using namespace graph;
+                std::vector<Vec2f> centers;
+                for(auto &&room : rooms) {
+                    centers.push_back(Vec2f(room.CenterX(), room.CenterY()));
+                }
+                std::vector<Edge> edges = generateUrquhart(centers);
 
-                std::unordered_map<Tile *, int> cost_so_far;
-                std::unordered_map<Tile *, Tile *> came_from;
+                // Use A* to plot paths between the rooms.
+                for (auto &&edge : edges) {
+                    Tile *start = &m_map[static_cast<int>(edge.p1.x)]
+                                            [static_cast<int>(edge.p1.y)];
+                    Tile *end = &m_map[static_cast<int>(edge.p2.x)]
+                                            [static_cast<int>(edge.p2.y)];
 
-                std::priority_queue<
-                    std::pair<int, Tile *>,
-                    std::vector<std::pair<int, Tile *>>,
-                    std::greater<std::pair<int, Tile *>>> open;
-                std::vector<Tile *> closed;
+                    std::unordered_map<Tile *, int> cost_so_far;
+                    std::unordered_map<Tile *, Tile *> came_from;
+                    std::priority_queue<
+                        std::pair<int, Tile *>,
+                        std::vector<std::pair<int, Tile *>>,
+                        std::greater<std::pair<int, Tile *>>> open;
+                    std::vector<Tile *> closed;
 
-                came_from[start] = start;
-                cost_so_far[start] = 0;
-                open.emplace(0, start);
+                    came_from[start] = start;
+                    cost_so_far[start] = 0;
+                    open.emplace(0, start);
 
-                while (!open.empty()) {
-                    auto current = open.top().second;
-                    open.pop();
+                    while (!open.empty()) {
+                        auto current = open.top().second;
+                        open.pop();
 
-                    if (current == end) {
-                        break;
-                    } else {
-                        for (auto *neighbour : GetTileNeighbours(current)) {
-                            int new_cost = cost_so_far[current] + 1;
+                        if (current == end) {
+                            break;
+                        } else {
+                            for (auto *neighbour : GetTileNeighbours(current)) {
+                                int new_cost = cost_so_far[current] + 1;
 
-                            if (!cost_so_far.count(neighbour) ||
-                                    new_cost < cost_so_far[neighbour]) {
-                                cost_so_far[neighbour] = new_cost;
+                                if (!cost_so_far.count(neighbour) ||
+                                        new_cost < cost_so_far[neighbour]) {
+                                    cost_so_far[neighbour] = new_cost;
 
-                                open.emplace(PathHeuristic(neighbour, end),
-                                             neighbour);
-                                came_from[neighbour] = current;
+                                    open.emplace(PathHeuristic(neighbour, end),
+                                                 neighbour);
+                                    came_from[neighbour] = current;
+                                }
                             }
                         }
                     }
-                }
 
-                // Mark the path on the map.
-                auto current = came_from[end];
-                while (current != start) {
-                    current->filled = true;
-                    current = came_from[current];
+                    // Mark the path on the map.
+                    auto current = came_from[end];
+                    while (current != start) {
+                        current->filled = true;
+                        current = came_from[current];
+                    }
                 }
             }
 
@@ -446,21 +460,6 @@ main (int argc, char *argv[])
                               800, 600,
                               SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-
-    using namespace delaunay;
-    std::vector<Vec2f> verts;
-    verts.push_back(Vec2f(1.0f, 1.0f));
-    verts.push_back(Vec2f(1.0f, 3.0f));
-    verts.push_back(Vec2f(3.0f, 3.0f));
-    verts.push_back(Vec2f(3.0f, 1.0f));
-
-    std::vector<std::pair<Vec2f, Vec2f>> graph = delaunayTriangulate(verts);
-
-    for (auto &&edge : graph) {
-        std::cout << "Edge: (" << edge.first.x << ", " << edge.first.y
-            << ") to (" << edge.second.x << ", " << edge.second.y << ")"
-            << std::endl;
-    }
 
     run = true;
     while (run) {

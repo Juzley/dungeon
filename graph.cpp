@@ -5,25 +5,12 @@
 #include <algorithm>
 #include <iostream>
 
-
 #include "graph.hpp"
+#include "util.hpp"
 
 
 namespace graph
 {
-    /*
-     * hash_combine
-     *
-     * Combine multiple std::hash values.
-     */
-    template <class T>
-    inline void hash_combine(std::size_t& seed, const T& v)
-    {
-        std::hash<T> hasher;
-        seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-    }
-
-
    struct {
        bool operator()(const Vec2f* v1, const Vec2f* v2)
        {
@@ -40,31 +27,6 @@ namespace graph
    } vecLess;
 
 
-    /*
-     * Edge
-     * 
-     * An edge in a graph, defined by its endpoints.
-     */
-    struct Edge
-    {
-        Edge() {}
-        Edge(const Vec2f &p1, const Vec2f &p2) : p1(p1), p2(p2) {}
-
-        float Length() const
-        {
-            return (p1 - p2).Magnitude();
-        }
-
-        bool operator == (const Edge& e2) const
-        {
-            return ((p1 == e2.p1 && p2 == e2.p2) ||
-                    (p1 == e2.p2 && p2 == e2.p1));
-        }
-
-        Vec2f p1;
-        Vec2f p2;
-    };
-
     struct EdgeHash
     {
         std::size_t operator()(const Edge &e) const
@@ -76,91 +38,15 @@ namespace graph
             std::array<const Vec2f*, 2> pts = { &e.p1, &e.p2 };
             std::sort(pts.begin(), pts.end(), vecLess);
 
-            hash_combine(seed, pts[0]->x);
-            hash_combine(seed, pts[0]->y);
-            hash_combine(seed, pts[1]->x);
-            hash_combine(seed, pts[1]->y);
+            util::hash_combine(seed, pts[0]->x);
+            util::hash_combine(seed, pts[0]->y);
+            util::hash_combine(seed, pts[1]->x);
+            util::hash_combine(seed, pts[1]->y);
 
             return seed;
         }
     };
 
-
-    /*
-     * Triangle
-     *
-     * A simple triangle class, specifically taylored for our triangulation
-     * calculations.
-     */
-    class Triangle
-    {
-        friend struct TriangleHash;
-        friend std::ostream& operator << (std::ostream& os, const Triangle& t);
-
-        public:
-            Triangle() {}
-
-            Triangle(const Triangle &t)
-                : p1(t.p1), p2(t.p2), p3(t.p3),
-                  edges{{t.edges[0], t.edges[1], t.edges[2]}},
-                  circumcenter(t.circumcenter), circumradius(t.circumradius)
-            {
-            }
-
-            Triangle(const Vec2f &p1, const Vec2f &p2, const Vec2f &p3)
-                : p1(p1), p2(p2), p3(p3),
-                  edges{{Edge(p1, p2), Edge(p2, p3), Edge(p3, p1)}}
-            {
-                float ab = (p1.x * p1.x) + (p1.y * p1.y);
-                float cd = (p2.x * p2.x) + (p2.y * p2.y);
-                float ef = (p3.x * p3.x) + (p3.y * p3.y);
-
-                circumcenter.x =
-                    (ab * (p3.y - p2.y) + cd * (p1.y - p3.y) + ef * (p2.y - p1.y))
-                    / (p1.x * (p3.y - p2.y) + p2.x * (p1.y - p3.y) + p3.x * (p2.y - p1.y))
-                    / 2.0f;
-                circumcenter.y =
-                    (ab * (p3.x - p2.x) + cd * (p1.x - p3.x) + ef * (p2.x - p1.x))
-                    / (p1.y * (p3.x - p2.x) + p2.y * (p1.x - p3.x) + p3.y * (p2.x - p1.x))
-                    / 2.0f;
-
-                circumradius = (p1 - circumcenter).Magnitude();
-            }
-
-            bool circumcircleContains(const Vec2f &v) const
-            {
-                // Distance between circumcenter and point 
-                float distance = (v - circumcenter).Magnitude();
-                return distance <= circumradius;
-            }
-
-            bool hasCommonPoints(const Triangle &t) const
-            {
-                return (p1 == t.p1 || p1 == t.p2 || p1 == t.p3 ||
-                        p2 == t.p1 || p2 == t.p2 || p2 == t.p3 ||
-                        p3 == t.p1 || p3 == t.p2 || p3 == t.p3);
-            }
-            
-            bool operator == (const Triangle &t2) const
-            {
-                return (p1 == t2.p1 || p1 == t2.p2 || p1 == t2.p3) &&
-                       (p2 == t2.p1 || p2 == t2.p2 || p1 == t2.p3) &&
-                       (p3 == t2.p1 || p3 == t2.p2 || p3 == t2.p3);
-            }
-
-            const std::array<Edge, 3> & GetEdges() const
-            {
-                return edges;
-            }
-
-        private:
-            Vec2f p1;
-            Vec2f p2;
-            Vec2f p3;
-            std::array<Edge, 3> edges;
-            Vec2f circumcenter;
-            float circumradius;
-    };
 
     std::ostream& operator << (std::ostream& os, const Triangle& t)
     {
@@ -181,12 +67,12 @@ namespace graph
             std::array<const Vec2f*, 3> pts = { &t.p1, &t.p2, &t.p3 };
             std::sort(pts.begin(), pts.end(), vecLess);
 
-            hash_combine(seed, pts[0]->x);
-            hash_combine(seed, pts[0]->y);
-            hash_combine(seed, pts[1]->x);
-            hash_combine(seed, pts[1]->y);
-            hash_combine(seed, pts[2]->x);
-            hash_combine(seed, pts[2]->y);
+            util::hash_combine(seed, pts[0]->x);
+            util::hash_combine(seed, pts[0]->y);
+            util::hash_combine(seed, pts[1]->x);
+            util::hash_combine(seed, pts[1]->y);
+            util::hash_combine(seed, pts[2]->x);
+            util::hash_combine(seed, pts[2]->y);
 
             return seed;
         }
@@ -229,12 +115,12 @@ namespace graph
 
 
     /*
-     * delaunayTriangulate
+     * generateDelaunay
      *
      * See function declaration for more detail.
      */
     std::vector<Triangle>
-    delaunayTriangulate(std::vector<Vec2f> &vertices)
+    generateDelaunay(std::vector<Vec2f> &vertices)
     {
         std::vector<Triangle> tris;
 
@@ -299,23 +185,30 @@ namespace graph
     }
 
 
+    /*
+     * generateUrquhart
+     *
+     * See function declaration for more detail.
+     */
     std::vector<Edge>
     generateUrquhart(std::vector<Vec2f> &vertices)
     {
-        std::vector<Triangle> delaunayTris = delaunayTriangulate(vertices);
+        std::vector<Triangle> delaunayTris = generateDelaunay(vertices);
 
         std::unordered_set<Edge, EdgeHash> edges;
         for (auto &&tri : delaunayTris) {
             auto triEdges = tri.GetEdges();
             auto &longestEdge =
-                *std::maxElement(triEdges.begin(), triEdges.end(),
+                *std::max_element(triEdges.begin(), triEdges.end(),
                                 [](const Edge &e1, const Edge &e2) {
-                                    e1.Length() < e2.Length();
+                                    return e1.Length() < e2.Length();
                                 });
-            std::copy_if(triEdges.begin() triEdges.end(), edges.begin(),
-                         [](const Edge &e) { return e != longestEdge; });
+            std::copy_if(triEdges.begin(), triEdges.end(), edges.begin(),
+                 [longestEdge](const Edge &e) { return e != longestEdge; });
         }
 
-        return edges;
+        std::vector<Edge> uniqueEdges;
+        uniqueEdges.assign(edges.begin(), edges.end());
+        return uniqueEdges;
     }
 }
