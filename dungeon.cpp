@@ -280,7 +280,7 @@ namespace dungeon
                 for(auto &&room : rooms) {
                     centers.push_back(Vec2f(room.CenterX(), room.CenterY()));
                 }
-                std::vector<Edge> edges = generateUrquhart(centers);
+                edges = generateUrquhart(centers);
 
                 // Use A* to plot paths between the rooms.
                 for (auto &&edge : edges) {
@@ -337,7 +337,6 @@ namespace dungeon
                 SDL_Rect rect;
 
                 SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-
                 for (std::size_t x = 0; x < m_map.size(); x++) {
                     for (std::size_t y = 0; y < m_map[x].size(); y++) {
                         if (m_map[x][y].filled) {
@@ -350,6 +349,15 @@ namespace dungeon
                         }
                     }
                 }
+
+                SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+                for (auto &&edge: edges) {
+                    SDL_RenderDrawLine(renderer,
+                                       edge.p1.x * TILE_WIDTH,
+                                       edge.p1.y * TILE_HEIGHT,
+                                       edge.p2.x * TILE_WIDTH,
+                                       edge.p2.y * TILE_HEIGHT);
+                }
             }
 
         private:
@@ -361,6 +369,7 @@ namespace dungeon
             static const unsigned int SEPARATION_ITERS = 10;
 
             std::array<std::array<Tile, MAP_HEIGHT>, MAP_WIDTH> m_map;
+            std::vector<graph::Edge> edges;
 
             std::vector<Tile *> GetTileNeighbours (Tile *tile)
             {
@@ -392,17 +401,11 @@ namespace dungeon
             int
             PathHeuristic (Tile *tile, Tile *goal)
             {
-                int h = std::abs(static_cast<int>(tile->x) -
-                                 static_cast<int>(goal->x)) +
-                        std::abs(static_cast<int>(tile->y) -
-                                 static_cast<int>(goal->y));
-
-                // Prefer to go through empty space.
-                if (tile->filled) {
-                    h *= 2;
-                }
-                
-                return h;
+                int x_diff = static_cast<int>(tile->x) -
+                                                static_cast<int>(goal->x);
+                int y_diff = static_cast<int>(tile->y) -
+                                                static_cast<int>(goal->y);
+                return x_diff * x_diff + y_diff * y_diff;
             }
 
             bool RoomOutOfBounds (Room &room,
