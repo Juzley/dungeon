@@ -18,7 +18,7 @@ debug: CFLAGS += -g -O0
 debug: default
 
 OBJECTS = $(patsubst %.cpp, %.o, $(wildcard *.cpp))
-HEADERS = $(wildcard *.h)
+HEADERS = $(wildcard *.h, *.hpp)
 
 %.o: %.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@
