@@ -11,21 +11,27 @@
 
 namespace graph
 {
-   struct {
-       bool operator()(const Vec2f* v1, const Vec2f* v2)
-       {
-           if (v1->x < v2->x) {
-               return true;
-           } else if (v1->x > v2->x) {
-               return false;
-           } else if (v1->y < v2->y) {
-               return true;
-           } else {
-               return false;
-           }
-       }
-   } vecLess;
+    struct {
+        bool operator()(const Vec2f* v1, const Vec2f* v2)
+        {
+            if (v1->x < v2->x) {
+                return true;
+            } else if (v1->x > v2->x) {
+                return false;
+            } else if (v1->y < v2->y) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    } vecLess;
 
+
+    std::ostream& operator << (std::ostream& os, const Edge& e)
+    {
+        return os << "Edge [(" << e.p1.x << ", " << e.p1.y << "), ("
+            << e.p2.x << ", " << e.p2.y << ")]";
+    }
 
     struct EdgeHash
     {
@@ -195,7 +201,15 @@ namespace graph
     {
         std::vector<Triangle> delaunayTris = generateDelaunay(vertices);
 
+        // Generate the set of edges of the delaunay triangles.
         std::unordered_set<Edge, EdgeHash> edges;
+        for (auto &&tri : delaunayTris) {
+            auto triEdges = tri.GetEdges();
+            edges.insert(triEdges.begin(), triEdges.end());
+        }
+
+        // Remove the longest edge from each triangle from the set to give the
+        // Urquhart graph.
         for (auto &&tri : delaunayTris) {
             auto triEdges = tri.GetEdges();
             auto &longestEdge =
@@ -203,14 +217,12 @@ namespace graph
                                 [](const Edge &e1, const Edge &e2) {
                                     return e1.Length() < e2.Length();
                                 });
-            std::copy_if(
-                triEdges.begin(), triEdges.end(),
-                std::inserter(edges, edges.begin()),
-                [longestEdge](const Edge &e) { return e != longestEdge; });
+
+            edges.erase(longestEdge);
         }
 
-        std::vector<Edge> uniqueEdges;
-        uniqueEdges.assign(edges.begin(), edges.end());
-        return uniqueEdges;
+        std::vector<Edge> result;
+        result.assign(edges.begin(), edges.end());
+        return result;
     }
 }

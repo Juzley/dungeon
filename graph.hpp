@@ -62,7 +62,7 @@ namespace graph {
     }
 
     static inline bool operator != (const Edge &e1, const Edge &e2) {
-        return operator==(e1, e2);
+        return !operator==(e1, e2);
     }
 
 

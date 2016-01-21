@@ -280,6 +280,7 @@ namespace dungeon
                 for(auto &&room : rooms) {
                     centers.push_back(Vec2f(room.CenterX(), room.CenterY()));
                 }
+                tris = generateDelaunay(centers);
                 edges = generateUrquhart(centers);
 
                 // Use A* to plot paths between the rooms.
@@ -351,7 +352,18 @@ namespace dungeon
                 }
 
                 SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-                for (auto &&edge: edges) {
+                for (auto &&tri : tris) {
+                    for (auto &&edge : tri.GetEdges()) {
+                        SDL_RenderDrawLine(renderer,
+                                           edge.p1.x * TILE_WIDTH,
+                                           edge.p1.y * TILE_HEIGHT,
+                                           edge.p2.x * TILE_WIDTH,
+                                           edge.p2.y * TILE_HEIGHT);
+                    }
+                }
+
+                SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+                for (auto &&edge : edges) {
                     SDL_RenderDrawLine(renderer,
                                        edge.p1.x * TILE_WIDTH,
                                        edge.p1.y * TILE_HEIGHT,
@@ -370,6 +382,7 @@ namespace dungeon
 
             std::array<std::array<Tile, MAP_HEIGHT>, MAP_WIDTH> m_map;
             std::vector<graph::Edge> edges;
+            std::vector<graph::Triangle> tris;
 
             std::vector<Tile *> GetTileNeighbours (Tile *tile)
             {
