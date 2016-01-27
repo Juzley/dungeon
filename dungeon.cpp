@@ -155,6 +155,8 @@ namespace dungeon
                 // Hack, -6 to avoid generating rooms off the map.
                 std::uniform_int_distribution<> x_dis(0, MAP_WIDTH);
                 std::uniform_int_distribution<> y_dis(0, MAP_HEIGHT);
+                std::uniform_int_distribution<> size_dis(ROOM_SIZE_MIN,
+                                                         ROOM_SIZE_MAX);
 
                 // Initialize tiles - each tile needs to know its own location
                 // for pathfinding.
@@ -167,7 +169,7 @@ namespace dungeon
 
                 // Create some rooms
                 for (unsigned int i = 0; i < MAP_ROOMS; i++) {
-                    Room room(x_dis(gen), y_dis(gen), 6, 6);
+                    Room room(x_dis(gen), y_dis(gen), size_dis(gen), size_dis(gen));
                     rooms.push_back(room);
                 }
 
@@ -378,7 +380,9 @@ namespace dungeon
             static const unsigned int MAP_HEIGHT = 120;
             static const unsigned int TILE_WIDTH = 5;
             static const unsigned int TILE_HEIGHT = 5;
-            static const unsigned int SEPARATION_ITERS = 10;
+            static const unsigned int SEPARATION_ITERS = 20;
+            static const unsigned int ROOM_SIZE_MIN = 8;
+            static const unsigned int ROOM_SIZE_MAX = 32;
 
             std::array<std::array<Tile, MAP_HEIGHT>, MAP_WIDTH> m_map;
             std::vector<graph::Edge> edges;
