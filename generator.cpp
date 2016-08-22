@@ -23,7 +23,7 @@ namespace dungeon
         // Initialize the tile array - each tile needs to know its own location
         // for pathfinding.
         for (std::size_t x = 0; x < m_tiles.size(); x++) {
-            for (std::size_t y = 0; y < m_tiles.size(); y++) {
+            for (std::size_t y = 0; y < m_tiles[x].size(); y++) {
                 m_tiles[x][y].x = x;
                 m_tiles[x][y].y = y;
             }
@@ -238,7 +238,13 @@ namespace dungeon
         for (auto &&room : m_rooms) {
             for (int x = room.Left(); x < room.Right(); x++) {
                 for (int y = room.Top(); y < room.Bottom(); y++) {
-                    m_tiles[x][y].filled = true;
+                    // Ignore squares outside the map - the rooms will all be
+                    // fitted inside the map later.
+                    if (x > 0 && y > 0 &&
+                        x < static_cast<int>(m_tiles.size()) &&
+                        y < static_cast<int>(m_tiles[x].size())) {
+                        m_tiles[x][y].filled = true;
+                    }
                 }
             }
         }
