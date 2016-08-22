@@ -1,15 +1,4 @@
 #include <SDL2/SDL.h>
-#include <array>
-#include <random>
-#include <cmath>
-#include <vector>
-#include <queue>
-#include <functional>
-#include <unordered_map>
-#include <utility>
-#include <algorithm>
-#include <iostream>
-#include <sstream>
 
 #include "graph.hpp"
 #include "generator.hpp"

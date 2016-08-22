@@ -1,120 +1,14 @@
+#include <random>
+#include <queue>
+#include <iostream>
+#include <algorithm>
+#include <sstream>
+#include <unordered_map>
+
 #include "generator.hpp"
 
 namespace dungeon
 {
-    struct Tile
-    {
-        public:
-            Tile() : filled(false)
-            {
-            }
-
-            unsigned int x;
-            unsigned int y;
-            bool         filled;
-    };
-
-
-    class Room
-    {
-        public:
-            Room(int          left,
-                 int          top,
-                 unsigned int width,
-                 unsigned int height)
-                : left(left), top(top), width(width), height(height)
-            {
-            }
-
-            bool Intersects (Room &other,
-                             int  *adjust_x = NULL,
-                             int  *adjust_y = NULL)
-            {
-                if (Left() < other.Right() && Right() > other.Left() &&
-                    Top() < other.Bottom() && Bottom() > other.Top()) {
-                    // Intersects, find the intersection distance if required.
-
-                    if (adjust_x != NULL) {
-                        // Work out if moving left or right is shorter.
-                        if (std::abs(Right() - other.Left()) >
-                            std::abs(other.Right() - Left())) {
-                            *adjust_x = other.Left() - Right();
-                        } else {
-                            *adjust_x = other.Right() - Left();
-                        }
-                    }
-                    
-                    if (adjust_y != NULL) {
-                        // Work out if moving up or down is shorter.
-                        if (std::abs(Bottom() - other.Top()) >
-                            std::abs(other.Bottom() - Top())) {
-                            *adjust_y = other.Top() - Bottom();
-                        } else {
-                            *adjust_y = other.Bottom() - Top();
-                        }
-                    }
-
-                    return true;
-                }
-
-                return false;
-            }
-
-            void Move(int x, int y)
-            {
-                left += x;
-                top += y;
-            }
-
-            int Left() const
-            {
-                return left;
-            }
-
-            int Right() const
-            {
-                return left + static_cast<int>(width);
-            }
-
-            int Top() const
-            {
-                return top;
-            }
-
-            int Bottom() const
-            {
-                return top + static_cast<int>(height);
-            }
-
-            unsigned int Width() const
-            {
-                return width;
-            }
-            
-            unsigned int Height() const
-            {
-                return height;
-            }
-
-            int CenterX() const
-            {
-                return static_cast<int>(static_cast<float>(left) +
-                                        static_cast<float>(width) / 2.0f);
-            }
-
-            int CenterY() const
-            {
-                return static_cast<int>(static_cast<float>(top) +
-                                        static_cast<float>(height) / 2.0f);
-            }
-
-        private:
-            int          left;
-            int          top;
-            unsigned int width;
-            unsigned int height;
-    };
-
     std::ostream& operator << (std::ostream& os, const Room& r)
     {
         return os << "Room [L " << r.Left() << ", R " << r.Right() <<
@@ -122,9 +16,9 @@ namespace dungeon
     }
 
 
-    void Generator::Generator()
+    Generator::Generator()
         : m_stage(CREATE_ROOMS),
-          m_randomGen(std::random_device rd),
+          m_randomGen((std::random_device()))
     {
         // Initialize the tile array - each tile needs to know its own location
         // for pathfinding.
@@ -136,10 +30,11 @@ namespace dungeon
         }
     }
 
-    void FitRooms()
+
+    bool Generator::FitRooms()
     {
         bool found_intersections = false;
-        std::cout << "Room separation iteration " << i + 1
+        std::cout << "Room separation iteration " << m_fitProgress
             << std::endl;
 
         for (auto&& room : m_rooms) {
@@ -198,12 +93,13 @@ namespace dungeon
 
         if (!found_intersections) {
             std::cout << "Found no intersections" << std::endl;
-            break;
         }
+
+        return found_intersections;
     }
 
 
-    std::vector<Tile *> GetTileNeighbours (Tile *tile)
+    std::vector<Tile *> Generator::GetTileNeighbours (Tile *tile)
     {
         std::vector<Tile *> neighbours;
 
@@ -231,7 +127,7 @@ namespace dungeon
     }
 
 
-    int PathHeuristic (Tile *tile, Tile *goal)
+    int Generator::PathHeuristic (Tile *tile, Tile *goal)
     {
         int x_diff = static_cast<int>(tile->x) -
                                         static_cast<int>(goal->x);
@@ -241,7 +137,7 @@ namespace dungeon
     }
 
 
-    bool RoomOutOfBounds (Room &room, int  *adjust_x, int  *adjust_y)
+    bool Generator::RoomOutOfBounds (Room &room, int  *adjust_x, int  *adjust_y)
     {
         bool out = false;
         
@@ -276,7 +172,7 @@ namespace dungeon
     }
 
 
-    void CreatePath()
+    void Generator::CreatePaths()
     {
         // Use A* to plot paths between the rooms.
         for (auto &&edge : m_urquhartEdges) {
@@ -366,7 +262,10 @@ namespace dungeon
                 std::uniform_int_distribution<> size_dis(ROOM_SIZE_MIN,
                                                          ROOM_SIZE_MAX);
 
-                Room room(x_dis(gen), y_dis(gen), size_dis(gen), size_dis(gen));
+                Room room(x_dis(m_randomGen),
+                          y_dis(m_randomGen),
+                          size_dis(m_randomGen),
+                          size_dis(m_randomGen));
                 m_rooms.push_back(room);
                 RoomsToTiles();
             }
@@ -378,12 +277,19 @@ namespace dungeon
                 // next stage
                 m_stage = DISCARD_ROOMS;
             } else {
-                FitRooms();
+                ++m_fitProgress;
+
+                bool intersections = FitRooms();
+                if (!intersections) {
+                    m_stage = DISCARD_ROOMS;
+                }
+
                 RoomsToTiles();
             }
             break;
 
         case DISCARD_ROOMS:
+        {
             // Discard any rooms that are out of bounds or intersecting
             // other rooms. Remove out-of-bounds rooms first, to ensure
             // that the minimal number of rooms are removed in the case
@@ -414,8 +320,9 @@ namespace dungeon
             m_stage = CONNECT_ROOMS;
 
             break;
-
+        }
         case CONNECT_ROOMS:
+        {
             using namespace graph;
             std::vector<Vec2f> centers;
             for(auto &&room : m_rooms) {
@@ -424,14 +331,14 @@ namespace dungeon
 
             // Generate the delaunay graph just so we can display it, we're
             // not going to actually use it in the pathfinding.
-            m_delaunaryTris = generateDelaunay(centers);
+            m_delaunayTris = generateDelaunay(centers);
 
             // Use an Urquhart graph to determine the connections between
             // the rooms.
             m_urquhartEdges = generateUrquhart(centers);
             m_stage = CREATE_PATHS;
             break;
-
+        }
         case CREATE_PATHS:
             CreatePaths();
             m_stage = FINISHED;
@@ -439,7 +346,7 @@ namespace dungeon
 
         case FINISHED:
         default:
-            finished = TRUE;
+            finished = true;
             break;
         }
 
@@ -466,7 +373,7 @@ namespace dungeon
         }
 
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-        for (auto &&tri : m_delaunaryTris) {
+        for (auto &&tri : m_delaunayTris) {
             for (auto &&edge : tri.GetEdges()) {
                 SDL_RenderDrawLine(renderer,
                                    edge.p1.x * TILE_WIDTH,
