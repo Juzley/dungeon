@@ -1,6 +1,8 @@
 #ifndef __GRAPH_HPP_
 #define __GRAPH_HPP_
 
+#include <array>
+
 namespace graph {
     /*
      * Vec2f

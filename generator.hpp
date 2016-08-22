@@ -8,11 +8,12 @@
 namespace dungeon
 {
     class Room;
+    class Tile;
 
     class Generator
     {
         public:
-            void Generator();
+            Generator();
 
             bool Iterate();
             void Draw(SDL_Renderer *renderer) const;
@@ -41,14 +42,14 @@ namespace dungeon
             std::vector<Tile *> GetTileNeighbours(Tile *tile);
             int PathHeuristic (Tile *tile, Tile *goal);
             bool RoomOutOfBounds(Room &room, int *adjust_x = NULL, int *adjust_y = NULL);
-            void Generator::RoomsToTiles();
+            void RoomsToTiles();
 
-            GeneratorStage              m_stage;
-            std::mt19937                m_randomGen;
-            unsigned int                m_fitProgress;
-            std::vector<Room>           m_rooms;
-            std::vector<graph::Edge>    m_urquhartEdges;
-            std::vector<graph::Triangle m_delaunaryTris;
+            GeneratorStage               m_stage;
+            std::mt19937                 m_randomGen;
+            unsigned int                 m_fitProgress;
+            std::vector<Room>            m_rooms;
+            std::vector<graph::Edge>     m_urquhartEdges;
+            std::vector<graph::Triangle> m_delaunayTris;
             std::array<std::array<Tile, MAP_HEIGHT>, MAP_WIDTH> m_tiles;
     };
 }
