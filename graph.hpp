@@ -2,6 +2,8 @@
 #define __GRAPH_HPP_
 
 #include <array>
+#include <vector>
+#include <cmath>
 
 namespace graph {
     /*

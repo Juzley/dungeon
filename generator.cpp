@@ -18,7 +18,7 @@ namespace dungeon
 
     Generator::Generator()
         : m_stage(CREATE_ROOMS),
-          m_randomGen((std::random_device()))
+          m_randomGen(std::random_device{}())
     {
         // Initialize the tile array - each tile needs to know its own location
         // for pathfinding.
