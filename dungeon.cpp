@@ -25,16 +25,23 @@ main (int argc, char *argv[])
     while (run) {
         SDL_Event e;
         if (SDL_PollEvent(&e)) {
-            if (e.type == SDL_QUIT) {
+            switch (e.type) {
+            case SDL_KEYDOWN:
+                generator.Iterate();
+                break;
+
+            case SDL_QUIT:
                 run = false;
+                break;
+
+            default:
+                break;
             }
         }
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);
 
-        // TODO: Delay iteration with timer/keypresses
-        generator.Iterate();
         generator.Draw(renderer);
 
         SDL_RenderPresent(renderer);
