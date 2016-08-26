@@ -112,13 +112,19 @@ namespace dungeon
     struct Tile
     {
         public:
-            Tile() : filled(false)
+            enum TileType {
+                FLOOR,
+                WALL,
+                EMPTY
+            };
+
+            Tile() : type(EMPTY)
             {
             }
 
             unsigned int x;
             unsigned int y;
-            bool         filled;
+            TileType     type;
     };
 
 
@@ -146,12 +152,14 @@ namespace dungeon
                 DISCARD_ROOMS,
                 CONNECT_ROOMS,
                 CREATE_PATHS,
+                CREATE_WALLS,
                 FINISHED
             };
 
             bool FitRooms();
             void CreatePaths();
-            std::vector<Tile *> GetTileNeighbours(Tile *tile);
+            void CreateWalls();
+            std::vector<Tile *> GetTileNeighbours(Tile *tile, bool diags = true);
             int PathHeuristic (Tile *tile, Tile *goal);
             bool RoomOutOfBounds(Room &room, int *adjust_x = NULL, int *adjust_y = NULL);
             void RoomsToTiles();

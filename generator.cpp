@@ -99,7 +99,7 @@ namespace dungeon
     }
 
 
-    std::vector<Tile *> Generator::GetTileNeighbours (Tile *tile)
+    std::vector<Tile *> Generator::GetTileNeighbours (Tile *tile, bool diags)
     {
         std::vector<Tile *> neighbours;
 
@@ -121,6 +121,28 @@ namespace dungeon
         if (tile->y < MAP_HEIGHT - 1) {
             neighbours.push_back(
                 &m_tiles[tile->x][tile->y + 1]);
+        }
+
+        if (diags) {
+            if (tile->x > 0 && tile->y > 0) {
+                neighbours.push_back(
+                    &m_tiles[tile->x - 1][tile->y - 1]);
+            }
+
+            if (tile->x > 0 && tile->y < MAP_HEIGHT - 1) {
+                neighbours.push_back(
+                    &m_tiles[tile->x - 1][tile->y + 1]);
+            }
+
+            if (tile->x < MAP_WIDTH - 1 && tile->y > 0) {
+                neighbours.push_back(
+                    &m_tiles[tile->x + 1][tile->y - 1]);
+            }
+
+            if (tile->x < MAP_WIDTH - 1 && tile->y < MAP_WIDTH - 1) {
+                neighbours.push_back(
+                    &m_tiles[tile->x + 1][tile->y + 1]);
+            }
         }
 
         return neighbours;
@@ -200,7 +222,9 @@ namespace dungeon
                 if (current == end) {
                     break;
                 } else {
-                    for (auto *neighbour : GetTileNeighbours(current)) {
+                    // Don't consider diagonal neighbours when creating paths
+                    // so that diagonal paths are wider.
+                    for (auto *neighbour : GetTileNeighbours(current, false)) {
                         int new_cost = cost_so_far[current] + 1;
 
                         if (!cost_so_far.count(neighbour) ||
@@ -218,8 +242,24 @@ namespace dungeon
             // Mark the path on the map.
             auto current = came_from[end];
             while (current != start) {
-                current->filled = true;
+                current->type = Tile::FLOOR;
                 current = came_from[current];
+            }
+        }
+    }
+
+
+    void Generator::CreateWalls()
+    {
+        for (std::size_t x = 0; x < m_tiles.size(); x++) {
+            for (std::size_t y = 0; y < m_tiles[x].size(); y++) {
+                if (m_tiles[x][y].type == Tile::FLOOR) {
+                    for (auto *tile : GetTileNeighbours(&m_tiles[x][y])) {
+                        if (tile->type == Tile::EMPTY) {
+                            tile->type = Tile::WALL;
+                        }
+                    }
+                }
             }
         }
     }
@@ -230,7 +270,7 @@ namespace dungeon
         // Clear the map.
         for (std::size_t x = 0; x < m_tiles.size(); x++) {
             for (std::size_t y = 0; y < m_tiles[x].size(); y++) {
-                m_tiles[x][y].filled = false;
+                m_tiles[x][y].type = Tile::EMPTY;
             }
         }
 
@@ -243,7 +283,7 @@ namespace dungeon
                     if (x > 0 && y > 0 &&
                         x < static_cast<int>(m_tiles.size()) &&
                         y < static_cast<int>(m_tiles[x].size())) {
-                        m_tiles[x][y].filled = true;
+                        m_tiles[x][y].type = Tile::FLOOR;
                     }
                 }
             }
@@ -347,6 +387,11 @@ namespace dungeon
         }
         case CREATE_PATHS:
             CreatePaths();
+            m_stage = CREATE_WALLS;
+            break;
+            
+        case CREATE_WALLS:
+            CreateWalls();
             m_stage = FINISHED;
             break;
 
@@ -364,10 +409,15 @@ namespace dungeon
     {
         SDL_Rect rect;
 
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         for (std::size_t x = 0; x < m_tiles.size(); x++) {
             for (std::size_t y = 0; y < m_tiles[x].size(); y++) {
-                if (m_tiles[x][y].filled) {
+                if (m_tiles[x][y].type != Tile::EMPTY) {
+                    if (m_tiles[x][y].type == Tile::FLOOR) {
+                        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                    } else if (m_tiles[x][y].type == Tile::WALL) {
+                        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+                    }
+
                     rect.x = x * TILE_WIDTH;
                     rect.y = y * TILE_HEIGHT;
                     rect.w = TILE_WIDTH;
