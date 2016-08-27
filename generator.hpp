@@ -4,6 +4,7 @@
 #include <random>
 
 #include "graph.hpp"
+#include "map.hpp"
 
 
 namespace dungeon
@@ -109,29 +110,14 @@ namespace dungeon
     };
 
 
-    struct Tile
-    {
-        public:
-            enum TileType {
-                FLOOR,
-                WALL,
-                EMPTY
-            };
-
-            Tile() : type(EMPTY)
-            {
-            }
-
-            unsigned int x;
-            unsigned int y;
-            TileType     type;
-    };
-
-
     class Generator
     {
         public:
-            Generator();
+            Generator()
+                : m_stage(CREATE_ROOMS),
+                  m_randomGen(std::random_device{}())
+            {
+            };
 
             bool Iterate();
             void Draw(SDL_Renderer *renderer) const;
@@ -159,11 +145,11 @@ namespace dungeon
             bool FitRooms();
             void CreatePaths();
             void CreateWalls();
-            std::vector<Tile *> GetTileNeighbours(Tile *tile, bool diags = true);
             int PathHeuristic (Tile *tile, Tile *goal);
             bool RoomOutOfBounds(Room &room, int *adjust_x = NULL, int *adjust_y = NULL);
             void RoomsToTiles();
 
+            Map                          m_map;
             GeneratorStage               m_stage;
             std::mt19937                 m_randomGen;
             unsigned int                 m_fitProgress;

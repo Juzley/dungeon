@@ -16,21 +16,6 @@ namespace dungeon
     }
 
 
-    Generator::Generator()
-        : m_stage(CREATE_ROOMS),
-          m_randomGen(std::random_device{}())
-    {
-        // Initialize the tile array - each tile needs to know its own location
-        // for pathfinding.
-        for (std::size_t x = 0; x < m_tiles.size(); x++) {
-            for (std::size_t y = 0; y < m_tiles[x].size(); y++) {
-                m_tiles[x][y].x = x;
-                m_tiles[x][y].y = y;
-            }
-        }
-    }
-
-
     bool Generator::FitRooms()
     {
         bool found_intersections = false;
@@ -99,55 +84,6 @@ namespace dungeon
     }
 
 
-    std::vector<Tile *> Generator::GetTileNeighbours (Tile *tile, bool diags)
-    {
-        std::vector<Tile *> neighbours;
-
-        if (tile->x > 0) {
-            neighbours.push_back(
-                &m_tiles[tile->x - 1][tile->y]);
-        }
-
-        if (tile->x < MAP_WIDTH - 1) {
-            neighbours.push_back(
-                &m_tiles[tile->x + 1][tile->y]);
-        }
-
-        if (tile->y > 0) {
-            neighbours.push_back(
-                &m_tiles[tile->x][tile->y - 1]);
-        }
-
-        if (tile->y < MAP_HEIGHT - 1) {
-            neighbours.push_back(
-                &m_tiles[tile->x][tile->y + 1]);
-        }
-
-        if (diags) {
-            if (tile->x > 0 && tile->y > 0) {
-                neighbours.push_back(
-                    &m_tiles[tile->x - 1][tile->y - 1]);
-            }
-
-            if (tile->x > 0 && tile->y < MAP_HEIGHT - 1) {
-                neighbours.push_back(
-                    &m_tiles[tile->x - 1][tile->y + 1]);
-            }
-
-            if (tile->x < MAP_WIDTH - 1 && tile->y > 0) {
-                neighbours.push_back(
-                    &m_tiles[tile->x + 1][tile->y - 1]);
-            }
-
-            if (tile->x < MAP_WIDTH - 1 && tile->y < MAP_WIDTH - 1) {
-                neighbours.push_back(
-                    &m_tiles[tile->x + 1][tile->y + 1]);
-            }
-        }
-
-        return neighbours;
-    }
-
 
     int Generator::PathHeuristic (Tile *tile, Tile *goal)
     {
@@ -198,10 +134,12 @@ namespace dungeon
     {
         // Use A* to plot paths between the rooms.
         for (auto &&edge : m_urquhartEdges) {
-            Tile *start = &m_tiles[static_cast<int>(edge.p1.x)]
-                                    [static_cast<int>(edge.p1.y)];
-            Tile *end = &m_tiles[static_cast<int>(edge.p2.x)]
-                                    [static_cast<int>(edge.p2.y)];
+            Tile *start = &m_map.GetTile(
+                                    static_cast<int>(edge.p1.x),
+                                    static_cast<int>(edge.p1.y));
+            Tile *end = &m_map.GetTile(
+                                    static_cast<int>(edge.p2.x),
+                                    static_cast<int>(edge.p2.y));
 
             std::unordered_map<Tile *, int> cost_so_far;
             std::unordered_map<Tile *, Tile *> came_from;
@@ -224,7 +162,7 @@ namespace dungeon
                 } else {
                     // Don't consider diagonal neighbours when creating paths
                     // so that diagonal paths are wider.
-                    for (auto *neighbour : GetTileNeighbours(current, false)) {
+                    for (auto *neighbour : m_map.GetTileNeighbours(current, false)) {
                         int new_cost = cost_so_far[current] + 1;
 
                         if (!cost_so_far.count(neighbour) ||
@@ -251,13 +189,11 @@ namespace dungeon
 
     void Generator::CreateWalls()
     {
-        for (std::size_t x = 0; x < m_tiles.size(); x++) {
-            for (std::size_t y = 0; y < m_tiles[x].size(); y++) {
-                if (m_tiles[x][y].type == Tile::FLOOR) {
-                    for (auto *tile : GetTileNeighbours(&m_tiles[x][y])) {
-                        if (tile->type == Tile::EMPTY) {
-                            tile->type = Tile::WALL;
-                        }
+        for (auto iter = m_map.beginTiles(); iter != m_map.endTiles(); ++iter)  {
+            if (iter->type == Tile::FLOOR) {
+                for (auto *tile : m_map.GetTileNeighbours(iter)) {
+                    if (tile->type == Tile::EMPTY) {
+                        tile->type = Tile::WALL;
                     }
                 }
             }
@@ -268,11 +204,7 @@ namespace dungeon
     void Generator::RoomsToTiles()
     {
         // Clear the map.
-        for (std::size_t x = 0; x < m_tiles.size(); x++) {
-            for (std::size_t y = 0; y < m_tiles[x].size(); y++) {
-                m_tiles[x][y].type = Tile::EMPTY;
-            }
-        }
+        m_map.Clear();
 
         // Fill in the map squares taken by rooms.
         for (auto &&room : m_rooms) {
@@ -281,9 +213,10 @@ namespace dungeon
                     // Ignore squares outside the map - the rooms will all be
                     // fitted inside the map later.
                     if (x > 0 && y > 0 &&
-                        x < static_cast<int>(m_tiles.size()) &&
-                        y < static_cast<int>(m_tiles[x].size())) {
-                        m_tiles[x][y].type = Tile::FLOOR;
+                        x < static_cast<int>(m_map.Width()) &&
+                        y < static_cast<int>(m_map.Height())) {
+
+                        m_map.GetTile(x, y).type = Tile::FLOOR;
                     }
                 }
             }
@@ -408,23 +341,22 @@ namespace dungeon
     void Generator::Draw(SDL_Renderer *renderer) const
     {
         SDL_Rect rect;
-
-        for (std::size_t x = 0; x < m_tiles.size(); x++) {
-            for (std::size_t y = 0; y < m_tiles[x].size(); y++) {
-                if (m_tiles[x][y].type != Tile::EMPTY) {
-                    if (m_tiles[x][y].type == Tile::FLOOR) {
-                        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-                    } else if (m_tiles[x][y].type == Tile::WALL) {
-                        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-                    }
-
-                    rect.x = x * TILE_WIDTH;
-                    rect.y = y * TILE_HEIGHT;
-                    rect.w = TILE_WIDTH;
-                    rect.h = TILE_HEIGHT;
-
-                    SDL_RenderFillRect(renderer, &rect);
+        for (auto iter = m_map.beginTiles();
+             iter != m_map.endTiles();
+             ++iter) {
+            const Tile &tile = *iter;
+            if (!tile.IsEmpty()) {
+                if (tile.type == Tile::FLOOR) {
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                } else if (tile.type == Tile::WALL) {
+                    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
                 }
+
+                rect.x = tile.x * TILE_WIDTH;
+                rect.y = tile.y * TILE_HEIGHT;
+                rect.w = TILE_WIDTH;
+                rect.h = TILE_HEIGHT;
+                SDL_RenderFillRect(renderer, &rect);
             }
         }
 
