@@ -1,15 +1,18 @@
 #include <SDL2/SDL.h>
+#include <memory>
 
 #include "graph.hpp"
 #include "generator.hpp"
+#include "gamestate.hpp"
 
 
 int
 main (int argc, char *argv[])
 {
-    SDL_Window         *window;
-    SDL_Renderer       *renderer;
-    dungeon::Generator  generator;
+    SDL_Window                *window;
+    SDL_Renderer              *renderer;
+    dungeon::Generator         generator;
+    dungeon::GameStateManager  gameState;
     bool                run;
 
     // TODO: Error handling
@@ -21,29 +24,18 @@ main (int argc, char *argv[])
                               SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
+    // Set up the gamestate manager and push the initial gamestate.
+    gameState.Push(std::make_shared<dungeon::GeneratorGameState>(gameState));
+
     run = true;
     while (run) {
-        SDL_Event e;
-        if (SDL_PollEvent(&e)) {
-            switch (e.type) {
-            case SDL_KEYDOWN:
-                generator.Iterate();
-                break;
+        // Run the current gamestate
+        gameState.Run();
 
-            case SDL_QUIT:
-                run = false;
-                break;
-
-            default:
-                break;
-            }
-        }
-
+        // Draw the current gamestate
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);
-
-        generator.Draw(renderer);
-
+        gameState.Draw(renderer);
         SDL_RenderPresent(renderer);
     }
 

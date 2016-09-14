@@ -1,10 +1,16 @@
+#ifndef __GENERATOR_HPP__
+#define __GENERATOR_HPP__
+
+
 #include <SDL2/SDL.h>
 #include <array>
 #include <vector>
 #include <random>
+#include <memory>
 
 #include "graph.hpp"
 #include "map.hpp"
+#include "gamestate.hpp"
 
 
 namespace dungeon
@@ -114,12 +120,22 @@ namespace dungeon
     {
         public:
             Generator()
-                : m_stage(CREATE_ROOMS),
+                : m_map(std::make_shared<Map>()),
+                  m_stage(CREATE_ROOMS),
                   m_randomGen(std::random_device{}())
             {
             };
 
-            bool Iterate();
+            std::shared_ptr<Map> GetMap()
+            {
+                return m_map;
+            }
+
+            bool IsFinished() const {
+                return m_stage == FINISHED;
+            }
+
+            void Iterate();
             void Draw(SDL_Renderer *renderer) const;
 
         private:
@@ -149,7 +165,7 @@ namespace dungeon
             bool RoomOutOfBounds(Room &room, int *adjust_x = NULL, int *adjust_y = NULL);
             void RoomsToTiles();
 
-            Map                          m_map;
+            std::shared_ptr<Map>         m_map;
             GeneratorStage               m_stage;
             std::mt19937                 m_randomGen;
             unsigned int                 m_fitProgress;
@@ -158,4 +174,28 @@ namespace dungeon
             std::vector<graph::Triangle> m_delaunayTris;
             std::array<std::array<Tile, MAP_HEIGHT>, MAP_WIDTH> m_tiles;
     };
+
+
+    class GeneratorGameState : public GameState
+    {
+        public:
+            GeneratorGameState(GameStateManager &manager)
+                : m_manager(manager)
+            {
+            }
+
+            void Draw(SDL_Renderer *renderer) const override
+            {
+                m_generator.Draw(renderer);
+            }
+
+            void Run() override;
+
+        private:
+            GameStateManager &m_manager;
+            Generator         m_generator;
+    };
 }
+
+
+#endif

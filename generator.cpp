@@ -1,3 +1,4 @@
+#include <SDL2/SDL.h>
 #include <random>
 #include <queue>
 #include <iostream>
@@ -6,6 +7,7 @@
 #include <unordered_map>
 
 #include "generator.hpp"
+#include "game.hpp"
 
 namespace dungeon
 {
@@ -134,10 +136,10 @@ namespace dungeon
     {
         // Use A* to plot paths between the rooms.
         for (auto &&edge : m_urquhartEdges) {
-            Tile *start = &m_map.GetTile(
+            Tile *start = &m_map->GetTile(
                                     static_cast<int>(edge.p1.x),
                                     static_cast<int>(edge.p1.y));
-            Tile *end = &m_map.GetTile(
+            Tile *end = &m_map->GetTile(
                                     static_cast<int>(edge.p2.x),
                                     static_cast<int>(edge.p2.y));
 
@@ -162,7 +164,7 @@ namespace dungeon
                 } else {
                     // Don't consider diagonal neighbours when creating paths
                     // so that diagonal paths are wider.
-                    for (auto *neighbour : m_map.GetTileNeighbours(current, false)) {
+                    for (auto *neighbour : m_map->GetTileNeighbours(current, false)) {
                         int new_cost = cost_so_far[current] + 1;
 
                         if (!cost_so_far.count(neighbour) ||
@@ -189,9 +191,9 @@ namespace dungeon
 
     void Generator::CreateWalls()
     {
-        for (auto iter = m_map.beginTiles(); iter != m_map.endTiles(); ++iter)  {
+        for (auto iter = m_map->beginTiles(); iter != m_map->endTiles(); ++iter)  {
             if (iter->type == Tile::FLOOR) {
-                for (auto *tile : m_map.GetTileNeighbours(iter)) {
+                for (auto *tile : m_map->GetTileNeighbours(iter)) {
                     if (tile->type == Tile::EMPTY) {
                         tile->type = Tile::WALL;
                     }
@@ -204,7 +206,7 @@ namespace dungeon
     void Generator::RoomsToTiles()
     {
         // Clear the map.
-        m_map.Clear();
+        m_map->Clear();
 
         // Fill in the map squares taken by rooms.
         for (auto &&room : m_rooms) {
@@ -213,10 +215,10 @@ namespace dungeon
                     // Ignore squares outside the map - the rooms will all be
                     // fitted inside the map later.
                     if (x > 0 && y > 0 &&
-                        x < static_cast<int>(m_map.Width()) &&
-                        y < static_cast<int>(m_map.Height())) {
+                        x < static_cast<int>(m_map->Width()) &&
+                        y < static_cast<int>(m_map->Height())) {
 
-                        m_map.GetTile(x, y).type = Tile::FLOOR;
+                        m_map->GetTile(x, y).type = Tile::FLOOR;
                     }
                 }
             }
@@ -224,10 +226,8 @@ namespace dungeon
     }
 
 
-    bool Generator::Iterate()
+    void Generator::Iterate()
     {
-        bool finished = false;
-
         switch(m_stage) {
         case CREATE_ROOMS:
             if (m_rooms.size() == MAP_ROOMS) {
@@ -330,19 +330,16 @@ namespace dungeon
 
         case FINISHED:
         default:
-            finished = true;
             break;
         }
-
-        return finished;
     }
 
 
     void Generator::Draw(SDL_Renderer *renderer) const
     {
         SDL_Rect rect;
-        for (auto iter = m_map.beginTiles();
-             iter != m_map.endTiles();
+        for (auto iter = m_map->beginTiles();
+             iter != m_map->endTiles();
              ++iter) {
             const Tile &tile = *iter;
             if (!tile.IsEmpty()) {
@@ -378,6 +375,22 @@ namespace dungeon
                                edge.p1.y * TILE_HEIGHT,
                                edge.p2.x * TILE_WIDTH,
                                edge.p2.y * TILE_HEIGHT);
+        }
+    }
+
+
+    void GeneratorGameState::Run()
+    {
+        SDL_Event e;
+
+        if (SDL_PollEvent(&e)) {
+            if (e.type == SDL_KEYDOWN) {
+                m_generator.Iterate();
+                if (m_generator.IsFinished()) {
+                    // Switch to a new game gamestate
+                    m_manager.Replace(std::make_shared<Game>(m_manager, m_generator.GetMap()));
+                }
+            }
         }
     }
 }

@@ -1,3 +1,7 @@
+#ifndef __MAP_HPP__
+#define __MAP_HPP__
+
+
 #include <array>
 #include <vector>
 
@@ -84,3 +88,6 @@ namespace dungeon
             }
     };
 }
+
+
+#endif
