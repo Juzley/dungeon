@@ -47,7 +47,7 @@ namespace dungeon
             {
                 // Initialize the tile array. Tiles know their own location,
                 // for pathfinding.
-                for (TileArray::size_type i; i < m_tiles.size(); i++) {
+                for (TileArray::size_type i = 0; i < m_tiles.size(); i++) {
                     m_tiles[i].x = i % MAP_WIDTH;
                     m_tiles[i].y = i / MAP_WIDTH;
                 }

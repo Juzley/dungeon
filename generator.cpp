@@ -209,7 +209,7 @@ namespace dungeon
         m_map->Clear();
 
         // Fill in the map squares taken by rooms.
-        for (auto &&room : m_rooms) {
+        for (auto&& room : m_rooms) {
             for (int x = room.Left(); x < room.Right(); x++) {
                 for (int y = room.Top(); y < room.Bottom(); y++) {
                     // Ignore squares outside the map - the rooms will all be
@@ -217,7 +217,6 @@ namespace dungeon
                     if (x > 0 && y > 0 &&
                         x < static_cast<int>(m_map->Width()) &&
                         y < static_cast<int>(m_map->Height())) {
-
                         m_map->GetTile(x, y).type = Tile::FLOOR;
                     }
                 }
