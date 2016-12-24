@@ -18,73 +18,68 @@ namespace dungeon
     }
 
 
-    bool Generator::FitRooms()
+    void Generator::FitRoom()
     {
-        bool found_intersections = false;
-        std::cout << "Room separation iteration " << m_fitProgress
-            << std::endl;
+        unsigned int intersect_count = 0;
+        int total_adjust_x = 0;
+        int total_adjust_y = 0;
+        int adjust_x;
+        int adjust_y;
 
-        for (auto&& room : m_rooms) {
-            unsigned int intersect_count = 0;
-            int total_adjust_x = 0;
-            int total_adjust_y = 0;
-            int adjust_x;
-            int adjust_y;
+        // Check for intersections with other rooms.
+        // TODO: efficient lookup for collisions with other
+        // rooms, rather than scanning the whole lot - possibly
+        // only worth it for large room numbers.
+        Room &room = *m_currentRoom;
+        for (auto&& other : m_rooms) {
+            if (&room != &other &&
+                room.Intersects(other,
+                                &adjust_x,
+                                &adjust_y)) {
+                m_collideRooms.push_back(other);
+                intersect_count++;
 
-            // Check for intersections with other rooms.
-            // TODO: efficient lookup for collisions with other
-            // rooms, rather than scanning the whole lot - possibly
-            // only worth it for large room numbers.
-            for (auto&& other : m_rooms) {
-                if (&room != &other &&
-                    room.Intersects(other,
-                                    &adjust_x,
-                                    &adjust_y)) {
-                    intersect_count++;
+                if (std::abs(adjust_x) < std::abs(adjust_y)) {
                     total_adjust_x += adjust_x;
+                } else {
                     total_adjust_y += adjust_y;
-
-                    std::cout << room << " intersects with "
-                        << other << ", adjust (" << adjust_x
-                        << ", " << adjust_y << ")" << std::endl;
                 }
 
+                std::cout << room << " intersects with "
+                    << other << ", adjust (" << adjust_x
+                    << ", " << adjust_y << ")" << std::endl;
             }
 
-            // Check for intersections with walls.
-            if (RoomOutOfBounds(room, &adjust_x, &adjust_y)) {
-                intersect_count++;
-                total_adjust_x += adjust_x;
-                total_adjust_y += adjust_y;
-                std::cout
-                    << room << " intersects with walls, adjust ("
-                    << adjust_x << ", " << adjust_y << ")"
-                    << std::endl;
-            }
-
-            if (intersect_count > 0) {
-                found_intersections = true;
-                int final_adjust_x =
-                    (static_cast<float>(total_adjust_x) /
-                     static_cast<float>(intersect_count)) * 1.1f;
-                int final_adjust_y =
-                    (static_cast<float>(total_adjust_y) /
-                     static_cast<float>(intersect_count)) * 1.1f;
-                std::cout << "Found " << intersect_count
-                    << " intersections for " << room
-                    << " moving (" << final_adjust_x << ", "
-                    << final_adjust_y << ")" << std::endl;
-                room.Move(final_adjust_x, final_adjust_y);
-            }
         }
 
-        if (!found_intersections) {
-            std::cout << "Found no intersections" << std::endl;
+        // Check for intersections with walls.
+        if (RoomOutOfBounds(room, &adjust_x, &adjust_y)) {
+            intersect_count++;
+            total_adjust_x += adjust_x;
+            total_adjust_y += adjust_y;
+            std::cout
+                << room << " intersects with walls, adjust ("
+                << adjust_x << ", " << adjust_y << ")"
+                << std::endl;
         }
 
-        return found_intersections;
+        if (intersect_count > 0) {
+            m_foundIntersection = true;
+            int final_adjust_x =
+                (static_cast<float>(total_adjust_x) /
+                 static_cast<float>(intersect_count)) * 1.1f;
+            int final_adjust_y =
+                (static_cast<float>(total_adjust_y) /
+                 static_cast<float>(intersect_count)) * 1.1f;
+            std::cout << "Found " << intersect_count
+                << " intersections for " << room
+                << " moving (" << final_adjust_x << ", "
+                << final_adjust_y << ")" << std::endl;
+            m_lastMove.first = room;
+            room.Move(final_adjust_x, final_adjust_y);
+            m_lastMove.second = room;
+        }
     }
-
 
 
     int Generator::PathHeuristic (Tile *tile, Tile *goal)
@@ -232,6 +227,8 @@ namespace dungeon
             if (m_rooms.size() == MAP_ROOMS) {
                 // We've created all the rooms we need - move onto the next
                 // stage
+                m_currentRoom = m_rooms.begin();
+                m_foundIntersection = false;
                 m_stage = FIT_ROOMS;
             } else {
                 // Create another room
@@ -255,11 +252,21 @@ namespace dungeon
                 // next stage
                 m_stage = DISCARD_ROOMS;
             } else {
-                ++m_fitProgress;
-
-                bool intersections = FitRooms();
-                if (!intersections) {
-                    m_stage = DISCARD_ROOMS;
+                if (m_currentRoom == m_rooms.end()) {
+                    // Finished the current iteration, see if we need to
+                    // continue
+                    if (m_foundIntersection) {
+                        m_foundIntersection = false;
+                        ++m_fitProgress;
+                        m_currentRoom = m_rooms.begin();
+                        std::cout << "Room separation iteration " << m_fitProgress
+                            << std::endl;
+                    } else {
+                        m_stage = DISCARD_ROOMS;
+                    }
+                } else {
+                    FitRoom();
+                    ++m_currentRoom;
                 }
 
                 RoomsToTiles();
@@ -334,6 +341,38 @@ namespace dungeon
     }
 
 
+    void Generator::DrawRoomOutline(SDL_Renderer *renderer,
+                                    const Room   &room) const
+    {
+        // Top
+        SDL_RenderDrawLine(renderer,
+                           room.Left() * TILE_WIDTH,
+                           room.Top() * TILE_HEIGHT,
+                           room.Right() * TILE_WIDTH,
+                           room.Top() * TILE_HEIGHT);
+        // Right
+        SDL_RenderDrawLine(renderer,
+                           room.Right() * TILE_WIDTH,
+                           room.Top() * TILE_HEIGHT,
+                           room.Right() * TILE_WIDTH,
+                           room.Bottom() * TILE_HEIGHT);
+
+        // Bottom
+        SDL_RenderDrawLine(renderer,
+                           room.Right() * TILE_WIDTH,
+                           room.Bottom() * TILE_HEIGHT,
+                           room.Left() * TILE_WIDTH,
+                           room.Bottom() * TILE_HEIGHT);
+
+        // Left
+        SDL_RenderDrawLine(renderer,
+                           room.Left() * TILE_WIDTH,
+                           room.Bottom() * TILE_HEIGHT,
+                           room.Left() * TILE_WIDTH,
+                           room.Top() * TILE_HEIGHT);
+    }
+
+
     void Generator::Draw(SDL_Renderer *renderer) const
     {
         SDL_Rect rect;
@@ -374,6 +413,28 @@ namespace dungeon
                                edge.p1.y * TILE_HEIGHT,
                                edge.p2.x * TILE_WIDTH,
                                edge.p2.y * TILE_HEIGHT);
+        }
+
+        if (m_stage == FIT_ROOMS && m_foundIntersection) {
+            SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+            for (auto &&room : m_collideRooms) {
+                DrawRoomOutline(renderer, room);
+            }
+
+            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            DrawRoomOutline(renderer, m_lastMove.first);
+            SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+            DrawRoomOutline(renderer, m_lastMove.second);
+
+            int start_x = (m_lastMove.first.Left() + m_lastMove.first.Width() / 2);
+            int start_y = (m_lastMove.first.Top() + m_lastMove.first.Height() / 2);
+            int end_x = (m_lastMove.second.Left() + m_lastMove.second.Width() / 2);
+            int end_y = (m_lastMove.second.Top() + m_lastMove.second.Height() / 2);
+            SDL_RenderDrawLine(renderer,
+                               start_x * TILE_WIDTH,
+                               start_y * TILE_HEIGHT,
+                               end_x * TILE_WIDTH,
+                               end_y * TILE_HEIGHT);
         }
     }
 

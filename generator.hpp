@@ -18,6 +18,10 @@ namespace dungeon
     class Room
     {
         public:
+            Room()
+            {
+            }
+
             Room(int          left,
                  int          top,
                  unsigned int width,
@@ -122,7 +126,8 @@ namespace dungeon
             Generator()
                 : m_map(std::make_shared<Map>()),
                   m_stage(CREATE_ROOMS),
-                  m_randomGen(std::random_device{}())
+                  m_randomGen(std::random_device{}()),
+                  m_lastMove(Room(), Room())
             {
             };
 
@@ -158,7 +163,8 @@ namespace dungeon
                 FINISHED
             };
 
-            bool FitRooms();
+            void FitRoom();
+            void DrawRoomOutline(SDL_Renderer *renderer, const Room &room) const;
             void CreatePaths();
             void CreateWalls();
             int PathHeuristic (Tile *tile, Tile *goal);
@@ -170,6 +176,10 @@ namespace dungeon
             std::mt19937                 m_randomGen;
             unsigned int                 m_fitProgress;
             std::vector<Room>            m_rooms;
+            std::vector<Room>::iterator  m_currentRoom;
+            std::vector<Room>            m_collideRooms;
+            std::pair<Room, Room>        m_lastMove;
+            bool                         m_foundIntersection;
             std::vector<graph::Edge>     m_urquhartEdges;
             std::vector<graph::Triangle> m_delaunayTris;
             std::array<std::array<Tile, MAP_HEIGHT>, MAP_WIDTH> m_tiles;
