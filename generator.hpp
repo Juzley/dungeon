@@ -40,7 +40,7 @@ namespace dungeon
 
                     if (adjust_x != NULL) {
                         // Work out if moving left or right is shorter.
-                        if (std::abs(Right() - other.Left()) >
+                        if (std::abs(Right() - other.Left()) <
                             std::abs(other.Right() - Left())) {
                             *adjust_x = other.Left() - Right();
                         } else {
@@ -50,7 +50,7 @@ namespace dungeon
                     
                     if (adjust_y != NULL) {
                         // Work out if moving up or down is shorter.
-                        if (std::abs(Bottom() - other.Top()) >
+                        if (std::abs(Bottom() - other.Top()) <
                             std::abs(other.Bottom() - Top())) {
                             *adjust_y = other.Top() - Bottom();
                         } else {

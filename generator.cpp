@@ -95,6 +95,14 @@ namespace dungeon
     bool Generator::RoomOutOfBounds (Room &room, int  *adjust_x, int  *adjust_y)
     {
         bool out = false;
+
+        if (adjust_x != NULL) {
+            *adjust_x = 0;
+        }
+
+        if (adjust_y != NULL) {
+            *adjust_y = 0;
+        }
         
         if (room.Left() < 0) {
             out = true;
@@ -229,6 +237,7 @@ namespace dungeon
                 // stage
                 m_currentRoom = m_rooms.begin();
                 m_foundIntersection = false;
+                m_collideRooms.clear();
                 m_stage = FIT_ROOMS;
             } else {
                 // Create another room
@@ -265,6 +274,7 @@ namespace dungeon
                         m_stage = DISCARD_ROOMS;
                     }
                 } else {
+                    m_collideRooms.clear();
                     FitRoom();
                     ++m_currentRoom;
                 }
