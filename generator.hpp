@@ -163,6 +163,28 @@ namespace dungeon
                 FINISHED
             };
 
+            static const char * StageToString(GeneratorStage stage)
+            {
+                switch (stage) {
+                case CREATE_ROOMS:
+                    return "Create Rooms";
+                case FIT_ROOMS:
+                    return "Fit Rooms";
+                case DISCARD_ROOMS:
+                    return "Discard Rooms";
+                case CONNECT_ROOMS:
+                    return "Connect Rooms";
+                case CREATE_PATHS:
+                    return "Create paths";
+                case CREATE_WALLS:
+                    return "Create walls";
+                case FINISHED:
+                    return "Finished";
+                default:
+                    return "Unknown";
+                }
+            }
+
             void FitRoom();
             void DrawRoomOutline(SDL_Renderer *renderer, const Room &room) const;
             void CreatePaths();

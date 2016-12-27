@@ -234,57 +234,63 @@ namespace dungeon
 
     void Generator::Iterate()
     {
+        std::cout << "Generator Iteration: Stage " <<
+            Generator::StageToString(m_stage) << std::endl;
         switch(m_stage) {
         case CREATE_ROOMS:
-            if (m_rooms.size() == MAP_ROOMS) {
-                // We've created all the rooms we need - move onto the next
-                // stage
-                m_currentRoom = m_rooms.begin();
-                m_foundIntersection = false;
-                m_collideRooms.clear();
-                m_stage = FIT_ROOMS;
-            } else {
-                // Create another room
-                std::uniform_int_distribution<> x_dis(0, MAP_WIDTH);
-                std::uniform_int_distribution<> y_dis(0, MAP_HEIGHT);
-                std::uniform_int_distribution<> size_dis(ROOM_SIZE_MIN,
-                                                         ROOM_SIZE_MAX);
+            do {
+                if (m_rooms.size() == MAP_ROOMS) {
+                    // We've created all the rooms we need - move onto the next
+                    // stage
+                    m_currentRoom = m_rooms.begin();
+                    m_foundIntersection = false;
+                    m_collideRooms.clear();
+                    m_stage = FIT_ROOMS;
+                } else {
+                    // Create another room
+                    std::uniform_int_distribution<> x_dis(0, MAP_WIDTH);
+                    std::uniform_int_distribution<> y_dis(0, MAP_HEIGHT);
+                    std::uniform_int_distribution<> size_dis(ROOM_SIZE_MIN,
+                                                             ROOM_SIZE_MAX);
 
-                Room room(x_dis(m_randomGen),
-                          y_dis(m_randomGen),
-                          size_dis(m_randomGen),
-                          size_dis(m_randomGen));
-                m_rooms.push_back(room);
-                RoomsToTiles();
-            }
+                    Room room(x_dis(m_randomGen),
+                              y_dis(m_randomGen),
+                              size_dis(m_randomGen),
+                              size_dis(m_randomGen));
+                    m_rooms.push_back(room);
+                    RoomsToTiles();
+                }
+            } while (m_stage == CREATE_ROOMS);
             break;
 
         case FIT_ROOMS:
-            if (m_fitProgress == SEPARATION_ITERS) {
-                // We've done as many iterations as we wanted - move onto the
-                // next stage
-                m_stage = DISCARD_ROOMS;
-            } else {
-                if (m_currentRoom == m_rooms.end()) {
-                    // Finished the current iteration, see if we need to
-                    // continue
-                    if (m_foundIntersection) {
-                        m_foundIntersection = false;
-                        ++m_fitProgress;
-                        m_currentRoom = m_rooms.begin();
-                        std::cout << "Room separation iteration " << m_fitProgress
-                            << std::endl;
-                    } else {
-                        m_stage = DISCARD_ROOMS;
-                    }
+            do {
+                if (m_fitProgress == SEPARATION_ITERS) {
+                    // We've done as many iterations as we wanted - move onto the
+                    // next stage
+                    m_stage = DISCARD_ROOMS;
                 } else {
-                    m_collideRooms.clear();
-                    FitRoom();
-                    ++m_currentRoom;
-                }
+                    if (m_currentRoom == m_rooms.end()) {
+                        // Finished the current iteration, see if we need to
+                        // continue
+                        if (m_foundIntersection) {
+                            m_foundIntersection = false;
+                            ++m_fitProgress;
+                            m_currentRoom = m_rooms.begin();
+                            std::cout << "Room separation iteration " << m_fitProgress
+                                << std::endl;
+                        } else {
+                            m_stage = DISCARD_ROOMS;
+                        }
+                    } else {
+                        m_collideRooms.clear();
+                        FitRoom();
+                        ++m_currentRoom;
+                    }
 
-                RoomsToTiles();
-            }
+                    RoomsToTiles();
+                }
+            } while (m_stage == FIT_ROOMS);
             break;
 
         case DISCARD_ROOMS:
