@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <cmath>
 #include <random>
 #include <queue>
 #include <iostream>
@@ -8,6 +9,7 @@
 
 #include "generator.hpp"
 #include "game.hpp"
+#include "util.hpp"
 
 namespace dungeon
 {
@@ -66,11 +68,13 @@ namespace dungeon
         if (intersect_count > 0) {
             m_foundIntersection = true;
             int final_adjust_x =
-                (static_cast<float>(total_adjust_x) /
-                 static_cast<float>(intersect_count)) * 1.1f;
+                util::symmetric_ceil(
+                    (static_cast<float>(total_adjust_x) /
+                     static_cast<float>(intersect_count)) * 1.2f);
             int final_adjust_y =
-                (static_cast<float>(total_adjust_y) /
-                 static_cast<float>(intersect_count)) * 1.1f;
+                util::symmetric_ceil(
+                    (static_cast<float>(total_adjust_y) /
+                     static_cast<float>(intersect_count)) * 1.2f);
             std::cout << "Found " << intersect_count
                 << " intersections for " << room
                 << " moving (" << final_adjust_x << ", "
