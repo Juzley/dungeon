@@ -160,6 +160,7 @@ namespace dungeon
                 CONNECT_ROOMS,
                 CREATE_PATHS,
                 CREATE_WALLS,
+                PLACE_PLAYER,
                 FINISHED
             };
 
@@ -178,6 +179,8 @@ namespace dungeon
                     return "Create paths";
                 case CREATE_WALLS:
                     return "Create walls";
+                case PLACE_PLAYER:
+                    return "Place player";
                 case FINISHED:
                     return "Finished";
                 default:
@@ -189,6 +192,7 @@ namespace dungeon
             void DrawRoomOutline(SDL_Renderer *renderer, const Room &room) const;
             void CreatePaths();
             void CreateWalls();
+            void PlacePlayer();
             int PathHeuristic (Tile *tile, Tile *goal);
             bool RoomOutOfBounds(Room &room, int *adjust_x = NULL, int *adjust_y = NULL);
             void RoomsToTiles();
@@ -204,7 +208,6 @@ namespace dungeon
             bool                         m_foundIntersection;
             std::vector<graph::Edge>     m_urquhartEdges;
             std::vector<graph::Triangle> m_delaunayTris;
-            std::array<std::array<Tile, MAP_HEIGHT>, MAP_WIDTH> m_tiles;
     };
 
 

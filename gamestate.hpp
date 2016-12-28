@@ -14,6 +14,10 @@ namespace dungeon
         public:
             virtual void Draw(SDL_Renderer *renderer) const = 0;
             virtual void Run() = 0;
+
+            virtual void Start()
+            {
+            }
     };
 
     class GameStateManager {
@@ -23,12 +27,14 @@ namespace dungeon
             void Push(GameStatePtr state)
             {
                 m_states.push(state);
+                state->Start();
             }
 
             void Replace(GameStatePtr state)
             {
                 Pop();
                 Push(state);
+                state->Start();
             }
 
             void Pop()

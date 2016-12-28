@@ -210,6 +210,27 @@ namespace dungeon
     }
 
 
+    void Generator::PlacePlayer()
+    {
+        // Pick a non-empty tile to spawn the player.
+
+        std::uniform_int_distribution<unsigned int> tile_dis(
+            0, std::count_if(
+                    m_map->beginTiles(), m_map->endTiles(),
+                    [](const Tile& tile) { return tile.type == Tile::FLOOR; }));
+        unsigned int tileIdx = tile_dis(m_randomGen);
+        for (auto tileIter = m_map->beginTiles();
+             tileIter != m_map->endTiles();
+             ++tileIter) {
+            if (tileIter->type == Tile::FLOOR) {
+                if (--tileIdx == 0) {
+                    tileIter->spawn = true;
+                }
+            }
+        }
+    }
+
+
     void Generator::RoomsToTiles()
     {
         // Clear the map.
@@ -351,6 +372,11 @@ namespace dungeon
             
         case CREATE_WALLS:
             CreateWalls();
+            m_stage = PLACE_PLAYER;
+            break;
+
+        case PLACE_PLAYER:
+            PlacePlayer();
             m_stage = FINISHED;
             break;
 

@@ -5,6 +5,7 @@
 
 #include "gamestate.hpp"
 #include "map.hpp"
+#include "player.hpp"
 
 
 namespace dungeon
@@ -19,12 +20,12 @@ namespace dungeon
 
             void Run() override;
             void Draw(SDL_Renderer *renderer) const override;
+            void Start() override;
 
         private:
             GameStateManager     &m_manager;
             std::shared_ptr<Map>  m_map;
-            unsigned int          m_player_x;
-            unsigned int          m_player_y;
+            Player                m_player;
     };
 }
 

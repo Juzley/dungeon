@@ -4,6 +4,7 @@
 
 #include <array>
 #include <vector>
+#include <algorithm>
 
 
 namespace dungeon
@@ -30,6 +31,7 @@ namespace dungeon
             unsigned int x;
             unsigned int y;
             TileType     type;
+            bool         spawn;
     };
 
     
