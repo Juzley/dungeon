@@ -285,31 +285,27 @@ namespace dungeon
 
         case FIT_ROOMS:
             do {
-                if (m_fitProgress == SEPARATION_ITERS) {
-                    // We've done as many iterations as we wanted - move onto the
-                    // next stage
-                    m_stage = DISCARD_ROOMS;
-                } else {
-                    if (m_currentRoom == m_rooms.end()) {
-                        // Finished the current iteration, see if we need to
-                        // continue
-                        if (m_foundIntersection) {
-                            m_foundIntersection = false;
-                            ++m_fitProgress;
-                            m_currentRoom = m_rooms.begin();
-                            std::cout << "Room separation iteration " << m_fitProgress
-                                << std::endl;
-                        } else {
-                            m_stage = DISCARD_ROOMS;
-                        }
+                if (m_currentRoom == m_rooms.end()) {
+                    // Finished the current iteration, see if we need to
+                    // continue
+                    m_fitProgress++;
+                    if (!m_foundIntersection ||
+                        m_fitProgress == SEPARATION_ITERS) {
+                        m_stage = DISCARD_ROOMS;
                     } else {
-                        m_collideRooms.clear();
-                        FitRoom();
-                        ++m_currentRoom;
+                        m_foundIntersection = false;
+                        m_currentRoom = m_rooms.begin();
+                        std::cout << "Room separation iteration " << m_fitProgress
+                            << std::endl;
                     }
-
-                    RoomsToTiles();
+                } else {
+                    // Move to the next room in the current iteration.
+                    m_collideRooms.clear();
+                    FitRoom();
+                    ++m_currentRoom;
                 }
+
+                RoomsToTiles();
             } while (m_stage == FIT_ROOMS);
             break;
 
