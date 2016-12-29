@@ -23,6 +23,8 @@ namespace dungeon
             void Start() override;
 
         private:
+            void UpdateSeen();
+
             GameStateManager     &m_manager;
             std::shared_ptr<Map>  m_map;
             Player                m_player;

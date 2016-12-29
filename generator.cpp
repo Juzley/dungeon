@@ -213,7 +213,6 @@ namespace dungeon
     void Generator::PlacePlayer()
     {
         // Pick a non-empty tile to spawn the player.
-
         std::uniform_int_distribution<unsigned int> tile_dis(
             0, std::count_if(
                     m_map->beginTiles(), m_map->endTiles(),

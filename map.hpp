@@ -32,6 +32,7 @@ namespace dungeon
             unsigned int y;
             TileType     type;
             bool         spawn;
+            bool         seen;
     };
 
     

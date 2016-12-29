@@ -4,6 +4,23 @@
 
 namespace dungeon
 {
+    void Game::UpdateSeen()
+    {
+        const int SIGHT_DISTANCE = 64;
+
+        // TODO: Make this more efficient.
+        for (auto tileIter = m_map->beginTiles();
+             tileIter != m_map->endTiles();
+             ++tileIter) {
+            int x_dist = static_cast<int>(m_player.x) - static_cast<int>(tileIter->x);
+            int y_dist = static_cast<int>(m_player.y) - static_cast<int>(tileIter->y);
+            if (x_dist * x_dist + y_dist * y_dist <= SIGHT_DISTANCE) {
+                tileIter->seen = true;
+            }
+        }
+    }
+
+
     void Game::Start()
     {
         // Find a spawn point.
@@ -16,6 +33,7 @@ namespace dungeon
             }
         }
     }
+
 
     void Game::Run()
     {
@@ -50,6 +68,7 @@ namespace dungeon
             if (m_map->GetTile(newX, newY).type == Tile::FLOOR) {
                 m_player.x = newX;
                 m_player.y = newY;
+                UpdateSeen();
             }
         }
     }
@@ -83,7 +102,7 @@ namespace dungeon
                 tileIter->y >= start_y &&
                 tileIter->y < start_y + TILE_COUNT_Y) {
 
-                if (!tileIter->IsEmpty()) {
+                if (!tileIter->IsEmpty() && tileIter->seen) {
                     if (tileIter->x == m_player.x && tileIter->y == m_player.y) {
                         SDL_SetRenderDrawColor(renderer, 200, 100, 100, 255);
                     } else if (tileIter->type == Tile::FLOOR) {
