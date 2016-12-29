@@ -54,8 +54,6 @@ namespace dungeon
             }
         }
 
-        return true;
-
         // Check horizontal intersections
         if (dy != 0) {
             for (int y = 1; y < static_cast<int>(dy); y++) {
@@ -100,13 +98,13 @@ namespace dungeon
                                                  starty + corners[i][1],
                                                  endx + corners[j][0],
                                                  endy + corners[j][0]);
-                if (!vis) {
-                    return false;
+                if (vis) {
+                    return true;
                 }
             }
         }
 
-        return true;
+        return false;
     }
 
 
