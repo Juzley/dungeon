@@ -27,11 +27,17 @@ namespace dungeon
             {
                 return type == EMPTY;
             }
+            
+            bool BlocksVisibility() const
+            {
+                return type == WALL || type == EMPTY;
+            }
 
             unsigned int x;
             unsigned int y;
             TileType     type;
             bool         spawn;
+            bool         visible;
             bool         seen;
     };
 
@@ -56,13 +62,10 @@ namespace dungeon
                 }
             }
 
-            Tile& GetTile(unsigned int x, unsigned int y)
-            {
-                return m_tiles[CoordsToTileIndex(x, y)];
-            }
-
             std::vector<Tile *> GetTileNeighbours (Tile *tile,
                                                    bool  diags = true);
+            bool IsVisible(unsigned int startx, unsigned int starty,
+                           unsigned int endx, unsigned int endy) const;
 
             TileIter beginTiles() { return m_tiles.begin(); }
             TileIter endTiles() { return m_tiles.end(); }
@@ -71,6 +74,19 @@ namespace dungeon
             ConstTileIter cbeginTiles() const { return m_tiles.cbegin(); }
             ConstTileIter cendTiles() const { return m_tiles.cend(); }
 
+            unsigned int Width() const { return MAP_WIDTH; }
+            unsigned int Height() const { return MAP_HEIGHT; }
+
+            Tile& GetTile(unsigned int x, unsigned int y)
+            {
+                return m_tiles[CoordsToTileIndex(x, y)];
+            }
+
+            const Tile& GetTile(unsigned int x, unsigned int y) const
+            {
+                return m_tiles[CoordsToTileIndex(x, y)];
+            }
+
             void Clear()
             {
                 for (auto &&tile : m_tiles) {
@@ -78,17 +94,25 @@ namespace dungeon
                 }
             }
 
-            unsigned int Width() const { return MAP_WIDTH; }
-            unsigned int Height() const { return MAP_HEIGHT; }
+            void ResetVisibility()
+            {
+                for (auto &&tile : m_tiles) {
+                    tile.visible = false;
+                }
+            }
+
 
         private:
-            TileArray m_tiles;
+            bool CheckCornerVisibility(unsigned int startx, unsigned int starty,
+                                       unsigned int endx, unsigned int endy) const;
 
-            std::size_t CoordsToTileIndex(unsigned int x,
-                                          unsigned int y)
+
+            std::size_t CoordsToTileIndex(unsigned int x, unsigned int y) const
             {
                 return (y * MAP_WIDTH + x);
             }
+
+            TileArray m_tiles;
     };
 }
 

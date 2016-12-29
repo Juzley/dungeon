@@ -4,18 +4,23 @@
 
 namespace dungeon
 {
-    void Game::UpdateSeen()
+    void Game::UpdateVisibility()
     {
         const int SIGHT_DISTANCE = 64;
 
         // TODO: Make this more efficient.
+        m_map->ResetVisibility();
         for (auto tileIter = m_map->beginTiles();
              tileIter != m_map->endTiles();
              ++tileIter) {
             int x_dist = static_cast<int>(m_player.x) - static_cast<int>(tileIter->x);
             int y_dist = static_cast<int>(m_player.y) - static_cast<int>(tileIter->y);
             if (x_dist * x_dist + y_dist * y_dist <= SIGHT_DISTANCE) {
-                tileIter->seen = true;
+                if (m_map->IsVisible(m_player.x, m_player.y,
+                                     tileIter->x, tileIter->y)) {
+                    tileIter->visible = true;
+                    tileIter->seen = true;
+                }
             }
         }
     }
@@ -68,7 +73,7 @@ namespace dungeon
             if (m_map->GetTile(newX, newY).type == Tile::FLOOR) {
                 m_player.x = newX;
                 m_player.y = newY;
-                UpdateSeen();
+                UpdateVisibility();
             }
         }
     }
@@ -116,6 +121,11 @@ namespace dungeon
                                       .w = TILE_SIZE,
                                       .h = TILE_SIZE };
                     SDL_RenderFillRect(renderer, &rect);
+
+                    if (!tileIter->visible) {
+                        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 100);
+                        SDL_RenderFillRect(renderer, &rect);
+                    }
                 }
             }
         }

@@ -13,7 +13,7 @@ main (int argc, char *argv[])
     SDL_Renderer              *renderer;
     dungeon::Generator         generator;
     dungeon::GameStateManager  gameState;
-    bool                run;
+    bool                       run;
 
     // TODO: Error handling
     (void)SDL_Init(SDL_INIT_VIDEO);
@@ -23,6 +23,7 @@ main (int argc, char *argv[])
                               1024, 768,
                               SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     // Set up the gamestate manager and push the initial gamestate.
     gameState.Push(std::make_shared<dungeon::GeneratorGameState>(gameState));
