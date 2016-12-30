@@ -205,6 +205,12 @@ namespace dungeon
                         tile->type = Tile::WALL;
                     }
                 }
+
+                // If the tile is at the edge of the map, make it a wall.
+                if (iter->x == 0 || iter->x == MAP_WIDTH - 1 ||
+                    iter->y == 0 || iter->y == MAP_HEIGHT - 1) {
+                    iter->type = Tile::WALL;
+                }
             }
         }
     }
@@ -290,7 +296,7 @@ namespace dungeon
                     // continue
                     m_fitProgress++;
                     if (!m_foundIntersection ||
-                        m_fitProgress == SEPARATION_ITERS) {
+                        m_fitProgress >= SEPARATION_ITERS) {
                         m_stage = DISCARD_ROOMS;
                     } else {
                         m_foundIntersection = false;

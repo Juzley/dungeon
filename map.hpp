@@ -103,8 +103,10 @@ namespace dungeon
 
 
         private:
-            bool CheckCornerVisibility(unsigned int startx, unsigned int starty,
-                                       unsigned int endx, unsigned int endy) const;
+            bool CheckCornerVisibility(unsigned int cornerx, unsigned int cornery,
+                                       int signx, int signy) const;
+            bool CheckRayVisibility(unsigned int startx, unsigned int starty,
+                                    unsigned int endx, unsigned int endy) const;
 
 
             std::size_t CoordsToTileIndex(unsigned int x, unsigned int y) const
