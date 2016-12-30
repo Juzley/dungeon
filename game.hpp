@@ -24,6 +24,7 @@ namespace dungeon
 
         private:
             void UpdateVisibility();
+            void DrawMiniMap(SDL_Renderer *renderer) const;
 
             GameStateManager     &m_manager;
             std::shared_ptr<Map>  m_map;

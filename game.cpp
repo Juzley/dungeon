@@ -83,6 +83,33 @@ namespace dungeon
     }
 
 
+    void Game::DrawMiniMap(SDL_Renderer *renderer) const
+    {
+        const unsigned int MINIMAP_START_X = 800;
+        const unsigned int MINIMAP_START_Y = 400;
+        const unsigned int MINIMAP_WIDTH = 200;
+        const unsigned int MINIMAP_HEIGHT = 200;
+
+        // Work out the size of a tile.
+        const unsigned int tile_width = MINIMAP_WIDTH / m_map->Width();
+        const unsigned int tile_height = MINIMAP_HEIGHT / m_map->Width();
+
+        for (auto tileIter = m_map->cbeginTiles();
+             tileIter != m_map->endTiles();
+             ++tileIter) {
+
+            if (!tileIter->IsEmpty() && tileIter->seen) {
+                SDL_Rect rect = { .x = static_cast<int>(tileIter->x * tile_width + MINIMAP_START_X),
+                                  .y = static_cast<int>(tileIter->y * tile_height + MINIMAP_START_Y),
+                                  .w = static_cast<int>(tile_width),
+                                  .h = static_cast<int>(tile_height) };
+                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                SDL_RenderFillRect(renderer, &rect);
+            }
+        }
+    }
+
+
     void Game::Draw(SDL_Renderer *renderer) const
     {
         const unsigned int TILE_SIZE = 20;
@@ -103,7 +130,7 @@ namespace dungeon
             start_y = Map::MAP_HEIGHT - TILE_COUNT_Y - 1;
         }
 
-        for (Map::TileIter tileIter = m_map->beginTiles();
+        for (auto tileIter = m_map->beginTiles();
              tileIter != m_map->endTiles();
              ++tileIter) {
             if (tileIter->x >= start_x &&
@@ -133,5 +160,7 @@ namespace dungeon
                 }
             }
         }
+
+        DrawMiniMap(renderer);
     }
 }
