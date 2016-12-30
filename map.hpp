@@ -59,6 +59,11 @@ namespace dungeon
                 for (TileArray::size_type i = 0; i < m_tiles.size(); i++) {
                     m_tiles[i].x = i % MAP_WIDTH;
                     m_tiles[i].y = i / MAP_WIDTH;
+                    m_tiles[i].type = Tile::EMPTY;
+                    m_tiles[i].spawn = false;
+                    m_tiles[i].visible = false;
+                    m_tiles[i].seen = false;
+
                 }
             }
 

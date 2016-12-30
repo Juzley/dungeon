@@ -35,8 +35,11 @@ namespace dungeon
             if (tileIter->spawn) {
                 m_player.x = tileIter->x;
                 m_player.y = tileIter->y;
+                break;
             }
         }
+
+        UpdateVisibility();
     }
 
 
@@ -68,7 +71,8 @@ namespace dungeon
             }
         }
 
-        if (newX > 0 && newX < static_cast<int>(Map::MAP_WIDTH - 1) &&
+        if ((newX != static_cast<int>(m_player.x) || newY != static_cast<int>(m_player.y)) &&
+            newX > 0 && newX < static_cast<int>(Map::MAP_WIDTH - 1) &&
             newY > 0 && newY < static_cast<int>(Map::MAP_HEIGHT - 1)) {
             if (m_map->GetTile(newX, newY).type == Tile::FLOOR) {
                 m_player.x = newX;
