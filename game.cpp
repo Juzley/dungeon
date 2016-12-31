@@ -103,8 +103,17 @@ namespace dungeon
                                   .y = static_cast<int>(tileIter->y * tile_height + MINIMAP_START_Y),
                                   .w = static_cast<int>(tile_width),
                                   .h = static_cast<int>(tile_height) };
-                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                if (tileIter->x == m_player.x && tileIter->y == m_player.y) {
+                    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+                } else {
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                }
                 SDL_RenderFillRect(renderer, &rect);
+
+                if (!tileIter->visible) {
+                    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 100);
+                    SDL_RenderFillRect(renderer, &rect);
+                }
             }
         }
     }
