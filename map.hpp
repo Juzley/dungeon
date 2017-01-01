@@ -16,6 +16,8 @@ namespace dungeon
                 FLOOR,
                 WALL,
                 STAIRS,
+                DOOR_OPEN,
+                DOOR_CLOSED,
                 EMPTY
             };
 
@@ -30,7 +32,7 @@ namespace dungeon
             
             bool BlocksVisibility() const
             {
-                return type == WALL || type == EMPTY;
+                return type == WALL || type == DOOR_CLOSED || type == EMPTY;
             }
 
             unsigned int x;

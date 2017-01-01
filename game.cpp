@@ -6,7 +6,7 @@ namespace dungeon
 {
     void Game::UpdateVisibility()
     {
-        const int SIGHT_DISTANCE = 64;
+        const int SIGHT_DISTANCE = 256;
 
         // TODO: Make this more efficient.
         m_map->ResetVisibility();
@@ -74,9 +74,15 @@ namespace dungeon
         if ((newX != static_cast<int>(m_player.x) || newY != static_cast<int>(m_player.y)) &&
             newX > 0 && newX < static_cast<int>(Map::MAP_WIDTH - 1) &&
             newY > 0 && newY < static_cast<int>(Map::MAP_HEIGHT - 1)) {
-            if (m_map->GetTile(newX, newY).type == Tile::FLOOR) {
+            Tile &tile = m_map->GetTile(newX, newY);
+
+            if (tile.type == Tile::FLOOR ||
+                tile.type == Tile::DOOR_OPEN) {
                 m_player.x = newX;
                 m_player.y = newY;
+                UpdateVisibility();
+            } else if (tile.type == Tile::DOOR_CLOSED) {
+                tile.type = Tile::DOOR_OPEN;
                 UpdateVisibility();
             }
         }
@@ -150,10 +156,13 @@ namespace dungeon
                 if (!tileIter->IsEmpty() && tileIter->seen) {
                     if (tileIter->x == m_player.x && tileIter->y == m_player.y) {
                         SDL_SetRenderDrawColor(renderer, 200, 100, 100, 255);
-                    } else if (tileIter->type == Tile::FLOOR) {
+                    } else if (tileIter->type == Tile::FLOOR ||
+                               tileIter->type == Tile::DOOR_OPEN) {
                         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
                     } else if (tileIter->type == Tile::WALL) {
                         SDL_SetRenderDrawColor(renderer, 100, 100, 200, 255);
+                    } else if (tileIter->type == Tile::DOOR_CLOSED) {
+                        SDL_SetRenderDrawColor(renderer, 0, 100, 0, 255);
                     }
 
                     SDL_Rect rect = { .x = static_cast<int>((tileIter->x - start_x) * TILE_SIZE),

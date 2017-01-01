@@ -236,6 +236,64 @@ namespace dungeon
     }
 
 
+    void Generator::PlaceDoors()
+    {
+        // Note that here we use EMPTY to mean 'any tile allowed', rather than
+        // that the tile has to be empty.
+        const Tile::TileType door_patterns[4][3][3] = {
+            {
+                { Tile::EMPTY, Tile::FLOOR, Tile::EMPTY },
+                { Tile::WALL, Tile::FLOOR, Tile::WALL },
+                { Tile::FLOOR, Tile::FLOOR, Tile::FLOOR }
+            },
+            {
+                { Tile::FLOOR, Tile::WALL, Tile::EMPTY },
+                { Tile::FLOOR, Tile::FLOOR, Tile::FLOOR },
+                { Tile::FLOOR, Tile::WALL, Tile::EMPTY },
+            },
+            {
+                { Tile::FLOOR, Tile::Tile::FLOOR, Tile::FLOOR },
+                { Tile::WALL, Tile::FLOOR, Tile::WALL },
+                { Tile::EMPTY, Tile::FLOOR, Tile::EMPTY },
+            },
+            {
+                { Tile::EMPTY, Tile::WALL, Tile::FLOOR },
+                { Tile::FLOOR, Tile::FLOOR, Tile::FLOOR },
+                { Tile::EMPTY, Tile::WALL, Tile::FLOOR }
+            }
+        };
+
+        for (auto tileIter = m_map->beginTiles(); tileIter != m_map->endTiles(); ++tileIter) {
+            if (tileIter->x == 0 || tileIter->y == 0 ||
+                tileIter->x == m_map->Width() - 1 || tileIter->y == m_map->Height() - 1) {
+                // No doors at the edge of the map.
+                continue;
+            }
+
+            // Search for the 'door pattern' - a set of tiles suitable for placing
+            // a door.
+            bool matches_pattern = false;
+            for (size_t p = 0; !matches_pattern && p < 4; p++) {
+                matches_pattern = true;
+                for (unsigned int x = 0; x <= 2; x++) {
+                    for (unsigned int y = 0; y <= 2; y++) {
+                        auto type = m_map->GetTile(tileIter->x + x - 1,
+                                                   tileIter->y + y - 1).type;
+                        if (door_patterns[p][y][x] != Tile::EMPTY &&
+                            door_patterns[p][y][x] != type) {
+                            matches_pattern = false;
+                        }
+                    }
+                }
+            }
+
+            if (matches_pattern) {
+                tileIter->type = Tile::DOOR_CLOSED;
+            }
+        }
+    }
+
+
     void Generator::RoomsToTiles()
     {
         // Clear the map.
@@ -378,6 +436,11 @@ namespace dungeon
 
         case PLACE_PLAYER:
             PlacePlayer();
+            m_stage = PLACE_DOORS;
+            break;
+
+        case PLACE_DOORS:
+            PlaceDoors();
             m_stage = FINISHED;
             break;
 
