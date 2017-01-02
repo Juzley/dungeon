@@ -13,8 +13,9 @@ namespace dungeon
     class Game : public GameState
     {
         public:
-            Game(GameStateManager manager, std::shared_ptr<Map> map)
-                : m_manager(manager), m_map(map)
+            Game(SDL_Renderer *renderer, GameStateManager &manager,
+                 std::shared_ptr<Map> map)
+                : m_manager(manager), m_renderer(renderer), m_map(map)
             {
             }
 
@@ -27,6 +28,7 @@ namespace dungeon
             void DrawMiniMap(SDL_Renderer *renderer) const;
 
             GameStateManager     &m_manager;
+            SDL_Renderer         *m_renderer;
             std::shared_ptr<Map>  m_map;
             Player                m_player;
     };

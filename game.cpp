@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include "game.hpp"
 #include "map.hpp"
+#include "pausemenu.hpp"
 
 namespace dungeon
 {
@@ -8,7 +9,8 @@ namespace dungeon
     {
         const int SIGHT_DISTANCE = 256;
 
-        // TODO: Make this more efficient.
+        // TODO: Make this more efficient - probably move into map and just
+        // look at the nearby tiles.
         m_map->ResetVisibility();
         for (auto tileIter = m_map->beginTiles();
              tileIter != m_map->endTiles();
@@ -66,6 +68,11 @@ namespace dungeon
 
                 case SDLK_RIGHT:
                     newX++;
+                    break;
+
+                case SDLK_ESCAPE:
+                    m_manager.Push(std::make_shared<PauseMenu>(
+                                                    m_renderer, m_manager));
                     break;
                 }
             }

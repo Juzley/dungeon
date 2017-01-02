@@ -558,7 +558,8 @@ namespace dungeon
                 m_generator.Iterate();
                 if (m_generator.IsFinished()) {
                     // Switch to a new game gamestate
-                    m_manager.Replace(std::make_shared<Game>(m_manager, m_generator.GetMap()));
+                    m_manager.Replace(std::make_shared<Game>(
+                                m_renderer, m_manager, m_generator.GetMap()));
                 }
             }
         }

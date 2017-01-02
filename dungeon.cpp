@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 #include <memory>
 
 #include "graph.hpp"
@@ -17,6 +18,7 @@ main (int argc, char *argv[])
 
     // TODO: Error handling
     (void)SDL_Init(SDL_INIT_VIDEO);
+    (void)TTF_Init();
     window = SDL_CreateWindow("Dungeon",
                               SDL_WINDOWPOS_UNDEFINED,
                               SDL_WINDOWPOS_UNDEFINED,
@@ -26,7 +28,8 @@ main (int argc, char *argv[])
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     // Set up the gamestate manager and push the initial gamestate.
-    gameState.Push(std::make_shared<dungeon::GeneratorGameState>(gameState));
+    gameState.Push(std::make_shared<dungeon::GeneratorGameState>(
+                                                        renderer, gameState));
 
     run = true;
     while (run) {
@@ -43,6 +46,7 @@ main (int argc, char *argv[])
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
 
+    TTF_Quit();
     SDL_Quit();
 
     return 0;

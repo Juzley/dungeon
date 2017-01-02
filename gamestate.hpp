@@ -12,6 +12,8 @@ namespace dungeon
     class GameState
     {
         public:
+            virtual ~GameState() {}
+
             virtual void Draw(SDL_Renderer *renderer) const = 0;
             virtual void Run() = 0;
 
