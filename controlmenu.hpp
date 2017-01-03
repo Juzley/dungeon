@@ -12,6 +12,8 @@ namespace dungeon
     class ControlMenuItem : public MenuItem
     {
         public:
+            ControlMenuItem(unsigned int id) : MenuItem(id) {}
+
             void Draw(SDL_Renderer *renderer, bool selected) const override;
     };
 
@@ -22,6 +24,12 @@ namespace dungeon
             void OnActivateItem(int id) override;
 
         private:
+            enum {
+                CONTROL_UP,
+                CONTROL_LEFT,
+                CONTROL_DOWN,
+                CONTROL_RIGHT
+            };
     };
 }
 

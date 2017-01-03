@@ -44,13 +44,13 @@ namespace dungeon
                 // TODO: Media manager for fonts.
                 // TODO: Bundle a font with the game - this only works on
                 // Ubuntu currently.
-                m_font = TTF_OpenFont(
+                TTF_Font *font = TTF_OpenFont(
                     "/usr/share/fonts/truetype/freefont/FreeMono.ttf", height);
-                if (m_font == NULL) {
+                if (font == NULL) {
                     // TODO: Exception
                 }
 
-                SDL_Surface *surf = TTF_RenderText_Solid(m_font, text, color);
+                SDL_Surface *surf = TTF_RenderText_Solid(font, text, color);
                 if (surf == NULL) {
                     // TODO: Exception
                 }
@@ -66,7 +66,7 @@ namespace dungeon
                 }
 
                 SDL_FreeSurface(surf);
-                TTF_CloseFont(m_font);
+                TTF_CloseFont(font);
             }
 
             ~TextMenuItem()
@@ -81,7 +81,6 @@ namespace dungeon
 
         private:
             SDL_Rect      m_rect;
-            TTF_Font     *m_font;
             SDL_Texture  *m_texture;
     };
 
