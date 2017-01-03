@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <GL/gl.h>
 #include <cmath>
 #include <random>
 #include <queue>
@@ -454,97 +455,83 @@ namespace dungeon
     void Generator::DrawRoomOutline(SDL_Renderer *renderer,
                                     const Room   &room) const
     {
-        // Top
-        SDL_RenderDrawLine(renderer,
-                           room.Left() * TILE_WIDTH,
-                           room.Top() * TILE_HEIGHT,
-                           room.Right() * TILE_WIDTH,
-                           room.Top() * TILE_HEIGHT);
-        // Right
-        SDL_RenderDrawLine(renderer,
-                           room.Right() * TILE_WIDTH,
-                           room.Top() * TILE_HEIGHT,
-                           room.Right() * TILE_WIDTH,
-                           room.Bottom() * TILE_HEIGHT);
-
-        // Bottom
-        SDL_RenderDrawLine(renderer,
-                           room.Right() * TILE_WIDTH,
-                           room.Bottom() * TILE_HEIGHT,
-                           room.Left() * TILE_WIDTH,
-                           room.Bottom() * TILE_HEIGHT);
-
-        // Left
-        SDL_RenderDrawLine(renderer,
-                           room.Left() * TILE_WIDTH,
-                           room.Bottom() * TILE_HEIGHT,
-                           room.Left() * TILE_WIDTH,
-                           room.Top() * TILE_HEIGHT);
+        glBegin(GL_LINE_LOOP);
+            glVertex2i(room.Left() * TILE_WIDTH,
+                       room.Top() * TILE_HEIGHT);
+            glVertex2i(room.Right() * TILE_WIDTH,
+                       room.Top() * TILE_HEIGHT);
+            glVertex2i(room.Right() * TILE_WIDTH,
+                       room.Bottom() * TILE_HEIGHT);
+            glVertex2i(room.Left() * TILE_WIDTH,
+                       room.Bottom() * TILE_HEIGHT);
+        glEnd();
     }
 
 
     void Generator::Draw(SDL_Renderer *renderer) const
     {
-        SDL_Rect rect;
         for (auto iter = m_map->beginTiles();
              iter != m_map->endTiles();
              ++iter) {
             const Tile &tile = *iter;
             if (!tile.IsEmpty()) {
                 if (tile.type == Tile::FLOOR) {
-                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                    glColor4f(1, 1, 1, 1);
                 } else if (tile.type == Tile::WALL) {
-                    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+                    glColor4f(1.0f, 0.5f, 0.5f, 1.0f);
                 }
 
-                rect.x = tile.x * TILE_WIDTH;
-                rect.y = tile.y * TILE_HEIGHT;
-                rect.w = TILE_WIDTH;
-                rect.h = TILE_HEIGHT;
-                SDL_RenderFillRect(renderer, &rect);
+                glRecti(tile.x * TILE_WIDTH,
+                        tile.y * TILE_HEIGHT,
+                        (tile.x + 1) * TILE_WIDTH,
+                        (tile.y + 1) * TILE_HEIGHT);
             }
         }
 
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
         for (auto &&tri : m_delaunayTris) {
             for (auto &&edge : tri.GetEdges()) {
-                SDL_RenderDrawLine(renderer,
-                                   edge.p1.x * TILE_WIDTH,
-                                   edge.p1.y * TILE_HEIGHT,
-                                   edge.p2.x * TILE_WIDTH,
-                                   edge.p2.y * TILE_HEIGHT);
+                glBegin(GL_LINE);
+                    glVertex2i(edge.p1.x * TILE_WIDTH,
+                               edge.p1.y * TILE_HEIGHT);
+                    glVertex2i(edge.p2.x * TILE_WIDTH,
+                               edge.p2.y * TILE_HEIGHT);
+                glEnd();
             }
         }
 
-        SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+        glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
         for (auto &&edge : m_urquhartEdges) {
-            SDL_RenderDrawLine(renderer,
-                               edge.p1.x * TILE_WIDTH,
-                               edge.p1.y * TILE_HEIGHT,
-                               edge.p2.x * TILE_WIDTH,
-                               edge.p2.y * TILE_HEIGHT);
+            glBegin(GL_LINE);
+                glVertex2i(edge.p1.x * TILE_WIDTH,
+                           edge.p1.y * TILE_HEIGHT);
+                glVertex2i(edge.p2.x * TILE_WIDTH,
+                           edge.p2.y * TILE_HEIGHT);
+            glEnd();
         }
 
         if (m_stage == FIT_ROOMS && m_foundIntersection) {
-            SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+            glColor4f(0, 0, 1, 0);
             for (auto &&room : m_collideRooms) {
                 DrawRoomOutline(renderer, room);
             }
 
-            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            glColor4f(1, 0, 0, 1);
             DrawRoomOutline(renderer, m_lastMove.first);
-            SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+            glColor4f(0, 1, 0, 1);
             DrawRoomOutline(renderer, m_lastMove.second);
 
             int start_x = (m_lastMove.first.Left() + m_lastMove.first.Width() / 2);
             int start_y = (m_lastMove.first.Top() + m_lastMove.first.Height() / 2);
             int end_x = (m_lastMove.second.Left() + m_lastMove.second.Width() / 2);
             int end_y = (m_lastMove.second.Top() + m_lastMove.second.Height() / 2);
-            SDL_RenderDrawLine(renderer,
-                               start_x * TILE_WIDTH,
-                               start_y * TILE_HEIGHT,
-                               end_x * TILE_WIDTH,
-                               end_y * TILE_HEIGHT);
+
+            glBegin(GL_LINE);
+            glVertex2i(start_x * TILE_WIDTH,
+                       start_y * TILE_HEIGHT);
+            glVertex2i(end_x * TILE_WIDTH,
+                       end_y * TILE_HEIGHT);
+            glEnd();
         }
     }
 

@@ -1,5 +1,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
 #include <memory>
 
 #include "graph.hpp"
@@ -11,7 +13,7 @@ int
 main (int argc, char *argv[])
 {
     SDL_Window                *window;
-    SDL_Renderer              *renderer;
+    SDL_GLContext              glContext;
     dungeon::Generator         generator;
     dungeon::GameStateManager  gameState;
     bool                       run;
@@ -23,13 +25,15 @@ main (int argc, char *argv[])
                               SDL_WINDOWPOS_UNDEFINED,
                               SDL_WINDOWPOS_UNDEFINED,
                               1024, 768,
-                              SDL_WINDOW_SHOWN);
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+                              SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+    glContext = SDL_GL_CreateContext(window);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    glViewport(0, 0, 1024, 768);
+    glMatrixMode(GL_PROJECTION);
+    glOrtho(0, 1024, 768, 0, -1, 1);
 
     // Set up the gamestate manager and push the initial gamestate.
-    gameState.Push(std::make_shared<dungeon::GeneratorGameState>(
-                                                        renderer, gameState));
+    gameState.Push(std::make_shared<dungeon::GeneratorGameState>(gameState));
 
     run = true;
     while (run) {
@@ -37,13 +41,13 @@ main (int argc, char *argv[])
         gameState.Run();
 
         // Draw the current gamestate
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-        SDL_RenderClear(renderer);
-        gameState.Draw(renderer);
-        SDL_RenderPresent(renderer);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        gameState.Draw(NULL);
+        SDL_GL_SwapWindow(window);
     }
 
-    SDL_DestroyRenderer(renderer);
+    SDL_GL_DeleteContext(glContext);
     SDL_DestroyWindow(window);
 
     TTF_Quit();

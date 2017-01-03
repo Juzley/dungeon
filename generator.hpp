@@ -218,8 +218,8 @@ namespace dungeon
     class GeneratorGameState : public GameState
     {
         public:
-            GeneratorGameState(SDL_Renderer *renderer, GameStateManager &manager)
-                : m_renderer(renderer), m_manager(manager)
+            GeneratorGameState(GameStateManager &manager)
+                : m_manager(manager)
             {
             }
 

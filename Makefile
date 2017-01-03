@@ -5,7 +5,7 @@ ifeq ($(OS),Windows_NT)
 	LIBS = -lmingw32 -lSDL2main -lSDL2 -lm -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lversion -luuid -lvorbisfile -lvorbisenc -lstdc++ 
 else
 	TARGET = dungeon
-	LIBS = -lSDL2 -lSDL2_ttf -lm -lstdc++
+	LIBS = -lGL -lSDL2 -lSDL2_ttf -lm -lstdc++
 endif
 
 .PHONY: default all clean
