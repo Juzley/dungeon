@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <GL/gl.h>
 #include "game.hpp"
 #include "map.hpp"
 #include "pausemenu.hpp"
@@ -112,20 +113,18 @@ namespace dungeon
              ++tileIter) {
 
             if (!tileIter->IsEmpty() && tileIter->seen) {
-                SDL_Rect rect = { .x = static_cast<int>(tileIter->x * tile_width + MINIMAP_START_X),
-                                  .y = static_cast<int>(tileIter->y * tile_height + MINIMAP_START_Y),
-                                  .w = static_cast<int>(tile_width),
-                                  .h = static_cast<int>(tile_height) };
+                unsigned int x = tileIter->x * tile_width + MINIMAP_START_X;
+                unsigned int y = tileIter->y * tile_height + MINIMAP_START_Y;
                 if (tileIter->x == m_player.x && tileIter->y == m_player.y) {
-                    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+                    glColor4f(1, 0, 0, 1);
                 } else {
-                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                    glColor4f(1, 1, 1, 1);
                 }
-                SDL_RenderFillRect(renderer, &rect);
+                glRecti(x, y, x + tile_width, y + tile_height);
 
                 if (!tileIter->visible) {
-                    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 100);
-                    SDL_RenderFillRect(renderer, &rect);
+                    glColor4f(0, 0, 0, 0.3f);
+                    glRecti(x, y, x + tile_width, y + tile_height);
                 }
             }
         }
@@ -162,25 +161,23 @@ namespace dungeon
 
                 if (!tileIter->IsEmpty() && tileIter->seen) {
                     if (tileIter->x == m_player.x && tileIter->y == m_player.y) {
-                        SDL_SetRenderDrawColor(renderer, 200, 100, 100, 255);
+                        glColor4f(0.8f, 0.3f, 0.3f, 1.0f);
                     } else if (tileIter->type == Tile::FLOOR ||
                                tileIter->type == Tile::DOOR_OPEN) {
-                        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                        glColor4f(1, 1, 1, 1);
                     } else if (tileIter->type == Tile::WALL) {
-                        SDL_SetRenderDrawColor(renderer, 100, 100, 200, 255);
+                        glColor4f(0.3f, 0.3f, 0.8f, 1.0f);
                     } else if (tileIter->type == Tile::DOOR_CLOSED) {
-                        SDL_SetRenderDrawColor(renderer, 0, 100, 0, 255);
+                        glColor4f(0, 0.3f, 0, 1);
                     }
 
-                    SDL_Rect rect = { .x = static_cast<int>((tileIter->x - start_x) * TILE_SIZE),
-                                      .y = static_cast<int>((tileIter->y - start_y) * TILE_SIZE),
-                                      .w = TILE_SIZE,
-                                      .h = TILE_SIZE };
-                    SDL_RenderFillRect(renderer, &rect);
-
+                    unsigned int x = (tileIter->x - start_x) * TILE_SIZE;
+                    unsigned int y = (tileIter->y - start_y) * TILE_SIZE;
+                    glRecti(x, y, x + TILE_SIZE, y + TILE_SIZE);
+                    
                     if (!tileIter->visible) {
-                        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 100);
-                        SDL_RenderFillRect(renderer, &rect);
+                        glColor4f(0, 0, 0, 0.3f);
+                        glRecti(x, y, x + TILE_SIZE, y + TILE_SIZE);
                     }
                 }
             }

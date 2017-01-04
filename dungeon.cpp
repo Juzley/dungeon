@@ -31,6 +31,9 @@ main (int argc, char *argv[])
     glViewport(0, 0, 1024, 768);
     glMatrixMode(GL_PROJECTION);
     glOrtho(0, 1024, 768, 0, -1, 1);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 
     // Set up the gamestate manager and push the initial gamestate.
     gameState.Push(std::make_shared<dungeon::GeneratorGameState>(gameState));
