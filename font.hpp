@@ -1,3 +1,6 @@
+#ifndef __FONT_H__
+#define __FONT_H__
+
 #include <SDL2/SDL_ttf.h>
 #include <GL/gl.h>
 #include <string>
@@ -53,3 +56,5 @@ namespace dungeon
             unsigned int  m_y;
     };
 }
+
+#endif // __FONT_H__

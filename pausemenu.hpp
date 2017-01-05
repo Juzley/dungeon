@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h>
 #include <memory>
 #include "menu.hpp"
+#include "controlmenu.hpp"
 
 
 namespace dungeon {
@@ -11,6 +12,7 @@ namespace dungeon {
     {
         public:
             enum {
+                ITEM_CONTROLS,
                 ITEM_RESUME
             };
 
@@ -18,9 +20,14 @@ namespace dungeon {
                 : m_manager(manager)
             {
                 m_items.push_back(std::shared_ptr<TextMenuItem>(
+                    new TextMenuItem("Controls",
+                                     400, 350, 32,
+                                     { 255, 255, 255, 255},
+                                     PauseMenu::ITEM_CONTROLS)));
+                m_items.push_back(std::shared_ptr<TextMenuItem>(
                     new TextMenuItem("Resume",
                                      400, 400, 32,
-                                     { 255, 255, 255, 255},
+                                     { 255, 255, 255, 255 },
                                      PauseMenu::ITEM_RESUME)));
             }
 
@@ -30,6 +37,11 @@ namespace dungeon {
                 case ITEM_RESUME:
                     m_manager.Pop();
                     break;
+
+                case ITEM_CONTROLS:
+                    m_manager.Push(std::make_shared<ControlMenu>(m_manager));
+                    break;
+
                 }
             }
 

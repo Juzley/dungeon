@@ -11,7 +11,7 @@ namespace dungeon
         // TODO: Media manager
         m_font = TTF_OpenFont(fontName, height);
         if (m_font == NULL) {
-            throw std::runtimeError("Failed to load font");
+            throw std::runtime_error("Failed to load font");
         }
 
         glGenTextures(1, &m_texId);
