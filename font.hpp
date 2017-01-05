@@ -47,6 +47,16 @@ namespace dungeon
                 DrawText(m_x, m_y);
             }
 
+            unsigned int GetWidth() const
+            {
+                return m_width;
+            }
+
+            unsigned int GetHeight() const
+            {
+                return m_height;
+            }
+
         private:
             TTF_Font     *m_font;
             GLuint        m_texId;
