@@ -14,12 +14,11 @@ namespace dungeon {
                 ITEM_RESUME
             };
 
-            PauseMenu(SDL_Renderer *renderer, GameStateManager &manager)
+            PauseMenu(GameStateManager &manager)
                 : m_manager(manager)
             {
                 m_items.push_back(std::shared_ptr<TextMenuItem>(
-                    new TextMenuItem(renderer,
-                                     "Resume",
+                    new TextMenuItem("Resume",
                                      400, 400, 32,
                                      { 255, 255, 255, 255},
                                      PauseMenu::ITEM_RESUME)));
@@ -35,7 +34,6 @@ namespace dungeon {
             }
 
         private:
-
             GameStateManager &m_manager;
     };
 }

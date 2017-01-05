@@ -14,7 +14,7 @@ namespace dungeon
         public:
             ControlMenuItem(unsigned int id) : MenuItem(id) {}
 
-            void Draw(SDL_Renderer *renderer, bool selected) const override;
+            void Draw(bool selected) const override;
     };
 
 

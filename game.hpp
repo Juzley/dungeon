@@ -15,20 +15,19 @@ namespace dungeon
         public:
             Game(SDL_Renderer *renderer, GameStateManager &manager,
                  std::shared_ptr<Map> map)
-                : m_manager(manager), m_renderer(renderer), m_map(map)
+                : m_manager(manager), m_map(map)
             {
             }
 
             void Run() override;
-            void Draw(SDL_Renderer *renderer) const override;
+            void Draw() const override;
             void Start() override;
 
         private:
             void UpdateVisibility();
-            void DrawMiniMap(SDL_Renderer *renderer) const;
+            void DrawMiniMap() const;
 
             GameStateManager     &m_manager;
-            SDL_Renderer         *m_renderer;
             std::shared_ptr<Map>  m_map;
             Player                m_player;
     };

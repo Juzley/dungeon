@@ -72,8 +72,7 @@ namespace dungeon
                     break;
 
                 case SDLK_ESCAPE:
-                    m_manager.Push(std::make_shared<PauseMenu>(
-                                                    m_renderer, m_manager));
+                    m_manager.Push(std::make_shared<PauseMenu>(m_manager));
                     break;
                 }
             }
@@ -97,7 +96,7 @@ namespace dungeon
     }
 
 
-    void Game::DrawMiniMap(SDL_Renderer *renderer) const
+    void Game::DrawMiniMap() const
     {
         const unsigned int MINIMAP_START_X = 800;
         const unsigned int MINIMAP_START_Y = 400;
@@ -131,7 +130,7 @@ namespace dungeon
     }
 
 
-    void Game::Draw(SDL_Renderer *renderer) const
+    void Game::Draw() const
     {
         const unsigned int TILE_SIZE = 20;
         const unsigned int TILE_COUNT_X = 39;
@@ -183,6 +182,6 @@ namespace dungeon
             }
         }
 
-        DrawMiniMap(renderer);
+        DrawMiniMap();
     }
 }

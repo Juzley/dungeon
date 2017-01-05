@@ -14,7 +14,7 @@ namespace dungeon
         public:
             virtual ~GameState() {}
 
-            virtual void Draw(SDL_Renderer *renderer) const = 0;
+            virtual void Draw() const = 0;
             virtual void Run() = 0;
 
             virtual void Start()
@@ -46,10 +46,10 @@ namespace dungeon
                 }
             }
 
-            void Draw(SDL_Renderer *renderer) const
+            void Draw() const
             {
                 if (!m_states.empty()) {
-                    m_states.top()->Draw(renderer);
+                    m_states.top()->Draw();
                 }
             }
 

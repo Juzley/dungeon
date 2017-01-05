@@ -35,12 +35,12 @@ namespace dungeon
     }
 
 
-    void Menu::Draw(SDL_Renderer *renderer) const
+    void Menu::Draw() const
     {
         for (auto &&item : m_items) {
             // Work out if this is the selected item.
             bool selected = (item == m_items[m_selectedItem]);
-            item->Draw(renderer, selected);
+            item->Draw(selected);
         }
     }
 }

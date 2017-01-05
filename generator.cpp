@@ -452,8 +452,7 @@ namespace dungeon
     }
 
 
-    void Generator::DrawRoomOutline(SDL_Renderer *renderer,
-                                    const Room   &room) const
+    void Generator::DrawRoomOutline(const Room &room) const
     {
         glBegin(GL_LINE_LOOP);
             glVertex2i(room.Left() * TILE_WIDTH,
@@ -468,7 +467,7 @@ namespace dungeon
     }
 
 
-    void Generator::Draw(SDL_Renderer *renderer) const
+    void Generator::Draw() const
     {
         for (auto iter = m_map->beginTiles();
              iter != m_map->endTiles();
@@ -513,13 +512,13 @@ namespace dungeon
         if (m_stage == FIT_ROOMS && m_foundIntersection) {
             glColor4f(0, 0, 1, 0);
             for (auto &&room : m_collideRooms) {
-                DrawRoomOutline(renderer, room);
+                DrawRoomOutline(room);
             }
 
             glColor4f(1, 0, 0, 1);
-            DrawRoomOutline(renderer, m_lastMove.first);
+            DrawRoomOutline(m_lastMove.first);
             glColor4f(0, 1, 0, 1);
-            DrawRoomOutline(renderer, m_lastMove.second);
+            DrawRoomOutline(m_lastMove.second);
 
             int start_x = (m_lastMove.first.Left() + m_lastMove.first.Width() / 2);
             int start_y = (m_lastMove.first.Top() + m_lastMove.first.Height() / 2);

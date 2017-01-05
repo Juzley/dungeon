@@ -141,7 +141,7 @@ namespace dungeon
             }
 
             void Iterate();
-            void Draw(SDL_Renderer *renderer) const;
+            void Draw() const;
 
         private:
             static const unsigned int MAP_ROOMS = 20;
@@ -192,7 +192,7 @@ namespace dungeon
             }
 
             void FitRoom();
-            void DrawRoomOutline(SDL_Renderer *renderer, const Room &room) const;
+            void DrawRoomOutline(const Room &room) const;
             void CreatePaths();
             void CreateWalls();
             void PlacePlayer();
@@ -223,9 +223,9 @@ namespace dungeon
             {
             }
 
-            void Draw(SDL_Renderer *renderer) const override
+            void Draw() const override
             {
-                m_generator.Draw(renderer);
+                m_generator.Draw();
             }
 
             void Run() override;

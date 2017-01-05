@@ -3,10 +3,10 @@
 
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
 #include <vector>
 #include <memory>
 #include "gamestate.hpp"
+#include "font.hpp"
 
 
 namespace dungeon
@@ -26,7 +26,7 @@ namespace dungeon
                 return m_id;
             }
             
-            virtual void Draw(SDL_Renderer *renderer, bool selected) const = 0;
+            virtual void Draw(bool selected) const = 0;
 
         protected:
             int m_id;
@@ -36,52 +36,26 @@ namespace dungeon
     class TextMenuItem : public MenuItem
     {
         public:
-            TextMenuItem(SDL_Renderer *renderer, const char *text,
-                         unsigned int x, unsigned int y, unsigned int height,
-                         SDL_Color color, int id)
-                : MenuItem(id)
+            TextMenuItem(const char *text, unsigned int x, unsigned int y,
+                         unsigned int height, SDL_Color color, int id)
+                : MenuItem(id),
+                // TODO: Bundle a font with the game.
+                  m_font("/usr/share/fonts/truetype/freefont/FreeMono.ttf",
+                         height, text, x, y)
             {
-                // TODO: Media manager for fonts.
-                // TODO: Bundle a font with the game - this only works on
-                // Ubuntu currently.
-                TTF_Font *font = TTF_OpenFont(
-                    "/usr/share/fonts/truetype/freefont/FreeMono.ttf", height);
-                if (font == NULL) {
-                    // TODO: Exception
-                }
-
-                SDL_Surface *surf = TTF_RenderText_Solid(font, text, color);
-                if (surf == NULL) {
-                    // TODO: Exception
-                }
-
-                m_rect.x = x;
-                m_rect.y = y;
-                m_rect.w = surf->w;
-                m_rect.h = surf->h;
-
-                m_texture = SDL_CreateTextureFromSurface(renderer, surf);
-                if (m_texture == NULL) {
-                    // TODO: Exception
-                }
-
-                SDL_FreeSurface(surf);
-                TTF_CloseFont(font);
             }
 
             ~TextMenuItem()
             {
-                SDL_DestroyTexture(m_texture);
             }
 
-            void Draw(SDL_Renderer *renderer, bool selected) const override 
+            void Draw(bool selected) const override 
             {
-                SDL_RenderCopy(renderer, m_texture, NULL, &m_rect);
+                m_font.DrawText();
             }
 
         private:
-            SDL_Rect      m_rect;
-            SDL_Texture  *m_texture;
+            Font m_font;
     };
 
 
@@ -91,7 +65,7 @@ namespace dungeon
             Menu() : m_selectedItem(0) {}
             virtual ~Menu() {}
             virtual void Run() override;
-            virtual void Draw(SDL_Renderer *renderer) const override;
+            virtual void Draw() const override;
             virtual void OnActivateItem(int id) = 0;
 
         protected:

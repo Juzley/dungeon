@@ -76,9 +76,10 @@ namespace dungeon
     }
 
 
-    void Font::DrawText(unsigned int x, unsigned int y)
+    void Font::DrawText(unsigned int x, unsigned int y) const
     {
-        // Draw
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, m_texId);
         glBegin(GL_QUADS);
             glTexCoord2i(0, 1); glVertex2f(x,           y);
             glTexCoord2i(1, 1); glVertex2f(x + m_width, y);
