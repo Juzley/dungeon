@@ -32,6 +32,8 @@ main (int argc, char *argv[])
     glMatrixMode(GL_PROJECTION);
     glOrtho(0, 1024, 768, 0, -1, 1);
     glEnable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
