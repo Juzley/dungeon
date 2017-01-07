@@ -5,6 +5,7 @@
 #include <SDL2/SDL.h>
 #include "menu.hpp"
 #include "font.hpp"
+#include "settings.hpp"
 
 
 namespace dungeon
@@ -50,11 +51,19 @@ namespace dungeon
 
         private:
             enum {
-                CONTROL_UP,
-                CONTROL_LEFT,
-                CONTROL_DOWN,
-                CONTROL_RIGHT
+                ITEM_BACK,
+                ITEM_CONTROLS
             };
+
+            int ItemForControl(Settings::Control c) {
+                return ITEM_CONTROLS + c;
+            }
+
+            Settings::Control ControlForItem(int item)
+            {
+                return static_cast<Settings::Control>(
+                                    item - static_cast<int>(ITEM_CONTROLS));
+            }
 
             GameStateManager                 &m_manager;
             bool                              m_listening;

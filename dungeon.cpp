@@ -7,6 +7,7 @@
 #include "graph.hpp"
 #include "generator.hpp"
 #include "gamestate.hpp"
+#include "settings.hpp"
 
 
 int
@@ -36,6 +37,8 @@ main (int argc, char *argv[])
     glDisable(GL_TEXTURE_2D);
     glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
 
+    // Load settings
+    dungeon::g_settings.Load();
 
     // Set up the gamestate manager and push the initial gamestate.
     gameState.Push(std::make_shared<dungeon::GeneratorGameState>(gameState));
