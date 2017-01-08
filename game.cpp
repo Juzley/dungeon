@@ -3,6 +3,7 @@
 #include "game.hpp"
 #include "map.hpp"
 #include "pausemenu.hpp"
+#include "settings.hpp"
 
 namespace dungeon
 {
@@ -55,25 +56,20 @@ namespace dungeon
 
         if (SDL_PollEvent(&e)) {
             if (e.type == SDL_KEYDOWN) {
-                switch (e.key.keysym.sym) {
-                case SDLK_UP:
+                if (e.key.keysym.sym ==
+                    g_settings.GetControl(Settings::CONTROL_UP)) {
                     newY--;
-                    break;
-                case SDLK_DOWN:
+                } else if (e.key.keysym.sym ==
+                           g_settings.GetControl(Settings::CONTROL_DOWN)) {
                     newY++;
-                    break;
-
-                case SDLK_LEFT:
+                } else if (e.key.keysym.sym ==
+                           g_settings.GetControl(Settings::CONTROL_LEFT)) {
                     newX--;
-                    break;
-
-                case SDLK_RIGHT:
+                } else if (e.key.keysym.sym ==
+                           g_settings.GetControl(Settings::CONTROL_RIGHT)) {
                     newX++;
-                    break;
-
-                case SDLK_ESCAPE:
+                } else if (e.key.keysym.sym == SDLK_ESCAPE) {
                     m_manager.Push(std::make_shared<PauseMenu>(m_manager));
-                    break;
                 }
             }
         }

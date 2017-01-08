@@ -5,14 +5,15 @@
 #include <memory>
 
 #include "graph.hpp"
-#include "generator.hpp"
 #include "gamestate.hpp"
+#include "mainmenu.hpp"
 #include "settings.hpp"
 
 
 int
 main (int argc, char *argv[])
 {
+    SDL_Event                  e;
     SDL_Window                *window;
     SDL_GLContext              glContext;
     dungeon::Generator         generator;
@@ -41,10 +42,16 @@ main (int argc, char *argv[])
     dungeon::g_settings.Load();
 
     // Set up the gamestate manager and push the initial gamestate.
-    gameState.Push(std::make_shared<dungeon::GeneratorGameState>(gameState));
+    gameState.Push(std::make_shared<dungeon::MainMenu>(gameState));
 
     run = true;
     while (run) {
+        // Check for exit event - just peek the event queue as gamestates will
+        // generally use SDL_PollEvent to get events.
+        if (SDL_PeepEvents(&e, 1, SDL_PEEKEVENT, SDL_QUIT, SDL_QUIT) > 0) {
+            run = false;
+        }
+
         // Run the current gamestate
         gameState.Run();
 
@@ -53,6 +60,11 @@ main (int argc, char *argv[])
         glClear(GL_COLOR_BUFFER_BIT);
         gameState.Draw();
         SDL_GL_SwapWindow(window);
+
+        // Removing the final gamestate indicates that we are exiting.
+        if (gameState.IsEmpty()) {
+            run = false;
+        }
     }
 
     SDL_GL_DeleteContext(glContext);

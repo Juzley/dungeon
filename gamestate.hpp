@@ -39,10 +39,12 @@ namespace dungeon
                 state->Start();
             }
 
-            void Pop()
+            void Pop(unsigned int count=1)
             {
-                if (!m_states.empty()) {
-                    m_states.pop();
+                while (count-- > 0) {
+                    if (!m_states.empty()) {
+                        m_states.pop();
+                    }
                 }
             }
 
@@ -60,6 +62,12 @@ namespace dungeon
                 }
 
             }
+
+            bool IsEmpty()
+            {
+                return m_states.empty();
+            }
+
         private:
             std::stack<GameStatePtr>  m_states;
     };

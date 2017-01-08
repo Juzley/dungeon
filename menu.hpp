@@ -51,6 +51,11 @@ namespace dungeon
 
             void Draw(bool selected) const override 
             {
+                if (selected) {
+                    glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
+                } else {
+                    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+                }
                 m_font.DrawText();
             }
 

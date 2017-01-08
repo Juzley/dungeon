@@ -18,7 +18,7 @@ namespace dungeon
                             unsigned int id)
                 : MenuItem(id),
                   m_font("/usr/share/fonts/truetype/freefont/FreeMono.ttf", height, text, x, y),
-                  m_x(x), m_y(y)
+                  m_x(x), m_y(y), m_active(false)
             {
             }
 
@@ -48,6 +48,7 @@ namespace dungeon
             ControlMenu(GameStateManager &manager);
             void OnActivateItem(int id) override;
             void Run() override;
+            void Draw() const override;
 
         private:
             enum {
@@ -55,11 +56,11 @@ namespace dungeon
                 ITEM_CONTROLS
             };
 
-            int ItemForControl(Settings::Control c) {
+            static int ItemForControl(Settings::Control c) {
                 return ITEM_CONTROLS + c;
             }
 
-            Settings::Control ControlForItem(int item)
+            static Settings::Control ControlForItem(int item)
             {
                 return static_cast<Settings::Control>(
                                     item - static_cast<int>(ITEM_CONTROLS));
@@ -68,6 +69,10 @@ namespace dungeon
             GameStateManager                 &m_manager;
             bool                              m_listening;
             std::shared_ptr<ControlMenuItem>  m_listeningItem;
+            Font                              m_upText;
+            Font                              m_downText;
+            Font                              m_leftText;
+            Font                              m_rightText; 
     };
 }
 

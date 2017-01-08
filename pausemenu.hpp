@@ -13,7 +13,8 @@ namespace dungeon {
         public:
             enum {
                 ITEM_CONTROLS,
-                ITEM_RESUME
+                ITEM_RESUME,
+                ITEM_QUIT
             };
 
             PauseMenu(GameStateManager &manager)
@@ -22,13 +23,18 @@ namespace dungeon {
                 m_items.push_back(std::shared_ptr<TextMenuItem>(
                     new TextMenuItem("Controls",
                                      400, 350, 32,
-                                     { 255, 255, 255, 255},
-                                     PauseMenu::ITEM_CONTROLS)));
+                                     { 255, 255, 255, 255 },
+                                     ITEM_CONTROLS)));
                 m_items.push_back(std::shared_ptr<TextMenuItem>(
                     new TextMenuItem("Resume",
                                      400, 400, 32,
                                      { 255, 255, 255, 255 },
-                                     PauseMenu::ITEM_RESUME)));
+                                     ITEM_RESUME)));
+                m_items.push_back(std::shared_ptr<TextMenuItem>(
+                    new TextMenuItem("Quit",
+                                     400, 450, 32,
+                                     { 255, 255, 255, 255 },
+                                     ITEM_QUIT)));
             }
 
             void OnActivateItem(int id) override
@@ -42,6 +48,11 @@ namespace dungeon {
                     m_manager.Push(std::make_shared<ControlMenu>(m_manager));
                     break;
 
+                case ITEM_QUIT:
+                    // Go back to the main menu - pop both this and the game
+                    // gamestate.
+                    m_manager.Pop(2);
+                    break;
                 }
             }
 

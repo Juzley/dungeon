@@ -24,22 +24,64 @@ namespace dungeon
 
 
     ControlMenu::ControlMenu(GameStateManager &manager)
-        : m_manager(manager)
+        : m_manager(manager),
+          m_listening(false),
+          m_upText("/usr/share/fonts/truetype/freefont/FreeMono.ttf",
+                   32, "Move Up", 0, 0),
+          m_downText("/usr/share/fonts/truetype/freefont/FreeMono.ttf",
+                     32, "Move Down", 0, 40),
+          m_leftText("/usr/share/fonts/truetype/freefont/FreeMono.ttf",
+                     32, "Move Left", 0, 80),
+          m_rightText("/usr/share/fonts/truetype/freefont/FreeMono.ttf",
+                      32, "Move Right", 0, 120)
     {
         m_items.push_back(std::shared_ptr<ControlMenuItem>(
             new ControlMenuItem(
                 SDL_GetKeyName(g_settings.GetControl(Settings::CONTROL_UP)),
-                20, 0, 0,
+                32, 400, 0,
                 ItemForControl(Settings::CONTROL_UP))));
         m_items.push_back(std::shared_ptr<ControlMenuItem>(
             new ControlMenuItem(
                 SDL_GetKeyName(g_settings.GetControl(Settings::CONTROL_DOWN)),
-                20, 0, 50,
+                32, 400, 40,
                 ItemForControl(Settings::CONTROL_DOWN))));
+        m_items.push_back(std::shared_ptr<ControlMenuItem>(
+            new ControlMenuItem(
+                SDL_GetKeyName(g_settings.GetControl(Settings::CONTROL_LEFT)),
+                32, 400, 80,
+                ItemForControl(Settings::CONTROL_LEFT))));
+        m_items.push_back(std::shared_ptr<ControlMenuItem>(
+            new ControlMenuItem(
+                SDL_GetKeyName(g_settings.GetControl(Settings::CONTROL_RIGHT)),
+                32, 400, 120,
+                ItemForControl(Settings::CONTROL_RIGHT))));
         m_items.push_back(std::shared_ptr<TextMenuItem>(
-            new TextMenuItem("Back", 400, 400, 32, { 255, 255, 255, 255},
+            new TextMenuItem("Back", 400, 400, 32, { 255, 255, 255, 255 },
                              ITEM_BACK)));
-     }
+    }
+
+
+    void ControlMenu::Draw() const
+    {
+        std::pair<const Font *, Settings::Control> labels[] = {
+            std::make_pair(&m_upText, Settings::CONTROL_UP),
+            std::make_pair(&m_downText, Settings::CONTROL_DOWN),
+            std::make_pair(&m_leftText, Settings::CONTROL_LEFT),
+            std::make_pair(&m_rightText, Settings::CONTROL_RIGHT)
+        };
+
+        for (size_t i = 0; i < (sizeof(labels) / sizeof(*labels)); i++) {
+            if (m_items[m_selectedItem]->GetId() ==
+                static_cast<unsigned int>(ItemForControl(labels[i].second))) {
+                glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
+            } else {
+                glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+            }
+            labels[i].first->DrawText();
+        }
+
+        Menu::Draw();
+    }
 
 
     void ControlMenu::OnActivateItem(int id)
@@ -68,6 +110,7 @@ namespace dungeon
                         g_settings.SetControl(
                             ControlForItem(m_listeningItem->GetId()),
                             e.key.keysym.sym);
+                        g_settings.Save();
                         m_listeningItem->SetText(SDL_GetKeyName(e.key.keysym.sym));
                         m_listening = false;
                         m_listeningItem->Activate(false);
