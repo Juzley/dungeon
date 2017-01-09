@@ -289,7 +289,11 @@ namespace dungeon
             }
 
             if (matches_pattern) {
-                tileIter->type = Tile::DOOR_CLOSED;
+                // TODO: Vary door percentage.
+                std::bernoulli_distribution dist(0.5);
+                if (dist(m_randomGen)) {
+                    tileIter->type = Tile::DOOR_CLOSED;
+                }
             }
         }
     }
@@ -478,6 +482,8 @@ namespace dungeon
                     glColor4f(1, 1, 1, 1);
                 } else if (tile.type == Tile::WALL) {
                     glColor4f(1.0f, 0.5f, 0.5f, 1.0f);
+                } else if (tile.type == Tile::DOOR_CLOSED) {
+                    glColor4f(0.5f, 1.0f, 0.5f, 1.0f);
                 }
 
                 glRecti(tile.x * TILE_WIDTH,
