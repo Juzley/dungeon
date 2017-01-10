@@ -5,7 +5,8 @@
 #include <array>
 #include <vector>
 #include <algorithm>
-
+#include <memory>
+#include "item.hpp"
 
 namespace dungeon
 {
@@ -41,6 +42,7 @@ namespace dungeon
             bool         spawn;
             bool         visible;
             bool         seen;
+            ItemVector   items;
     };
 
     

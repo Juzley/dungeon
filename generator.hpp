@@ -162,6 +162,7 @@ namespace dungeon
                 CREATE_WALLS,
                 PLACE_PLAYER,
                 PLACE_DOORS,
+                PLACE_ITEMS,
                 FINISHED
             };
 
@@ -184,6 +185,8 @@ namespace dungeon
                     return "Place player";
                 case PLACE_DOORS:
                     return "Place doors";
+                case PLACE_ITEMS:
+                    return "Place items";
                 case FINISHED:
                     return "Finished";
                 default:
@@ -197,6 +200,7 @@ namespace dungeon
             void CreateWalls();
             void PlacePlayer();
             void PlaceDoors();
+            void PlaceItems();
             int PathHeuristic (Tile *tile, Tile *goal);
             bool RoomOutOfBounds(Room &room, int *adjust_x = NULL, int *adjust_y = NULL);
             void RoomsToTiles();

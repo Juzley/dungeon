@@ -299,6 +299,18 @@ namespace dungeon
     }
 
 
+    void Generator::PlaceItems()
+    {
+        std::bernoulli_distribution dist(0.001);
+        
+        for (auto iter = m_map->beginTiles(); iter != m_map->endTiles(); ++iter) {
+            if (dist(m_randomGen)) {
+                iter->items.push_back(std::make_shared<Item>());
+            }
+        }
+    }
+
+
     void Generator::RoomsToTiles()
     {
         // Clear the map.
@@ -446,6 +458,11 @@ namespace dungeon
 
         case PLACE_DOORS:
             PlaceDoors();
+            m_stage = PLACE_ITEMS;
+            break;
+             
+        case PLACE_ITEMS:
+            PlaceItems();
             m_stage = FINISHED;
             break;
 

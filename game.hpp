@@ -25,6 +25,7 @@ namespace dungeon
 
         private:
             void UpdateVisibility();
+            void PickupItems();
             void DrawMiniMap() const;
 
             GameStateManager     &m_manager;

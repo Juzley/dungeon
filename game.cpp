@@ -30,6 +30,16 @@ namespace dungeon
     }
 
 
+    void Game::PickupItems()
+    {
+        auto &tile = m_map->GetTile(m_player.x, m_player.y);
+        if (!tile.items.empty()) {
+            m_player.AddItems(tile.items.begin(), tile.items.end());
+            tile.items.clear();
+        }
+    }
+
+
     void Game::Start()
     {
         // Find a spawn point.
@@ -84,6 +94,7 @@ namespace dungeon
                 m_player.x = newX;
                 m_player.y = newY;
                 UpdateVisibility();
+                PickupItems();
             } else if (tile.type == Tile::DOOR_CLOSED) {
                 tile.type = Tile::DOOR_OPEN;
                 UpdateVisibility();
@@ -159,7 +170,11 @@ namespace dungeon
                         glColor4f(0.8f, 0.3f, 0.3f, 1.0f);
                     } else if (tileIter->type == Tile::FLOOR ||
                                tileIter->type == Tile::DOOR_OPEN) {
-                        glColor4f(1, 1, 1, 1);
+                        if (!tileIter->items.empty()) {
+                            glColor4f(1, 0, 0, 1);
+                        } else {
+                            glColor4f(1, 1, 1, 1);
+                        }
                     } else if (tileIter->type == Tile::WALL) {
                         glColor4f(0.3f, 0.3f, 0.8f, 1.0f);
                     } else if (tileIter->type == Tile::DOOR_CLOSED) {
